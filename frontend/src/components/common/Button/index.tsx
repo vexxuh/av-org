@@ -30,6 +30,7 @@ interface ButtonProps {
   isLoading?: boolean;
   disabled?: boolean;
   type?: "button" | "submit";
+  className?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -42,12 +43,13 @@ const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   disabled = false,
   type = "button",
+  className = "",
 }) => {
   return (
     <ButtonStyled
       variant={variant}
       size={size}
-      className="inter-sm font-montserrat"
+      className={`${className} inter-sm font-montserrat`}
       onClick={onClick}
       disabled={disabled}
       type={type}
