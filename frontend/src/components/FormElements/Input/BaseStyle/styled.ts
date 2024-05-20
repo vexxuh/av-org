@@ -11,6 +11,7 @@ type InputStyledProps = {
 export const InputStyled = styled.div<InputStyledProps>`
   margin-bottom: ${(p) => p.mb}px;
   position: relative;
+  width: 100%;
 
   label {
     margin-bottom: 12px;
@@ -23,7 +24,6 @@ export const InputStyled = styled.div<InputStyledProps>`
     width: 100%;
     height: 100%;
     border: ${(p) => (p.type === "radio" ? "none" : "1px solid #d9d9d9")};
-    border-radius: 10px;
     overflow: hidden;
     outline: none;
     display: flex;

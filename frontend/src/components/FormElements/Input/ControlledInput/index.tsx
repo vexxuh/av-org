@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 // React Icons
@@ -13,7 +13,7 @@ import { InputBaseProps } from "../BaseTypes";
 type InputProps = InputBaseProps & {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  queryName?: string;
+  icon?: React.ReactNode;
 };
 
 const Input: React.FC<InputProps> = ({
@@ -30,25 +30,13 @@ const Input: React.FC<InputProps> = ({
   lowercase,
   value,
   onChange,
-  queryName,
   inputClass,
   disabled,
+  icon,
   ...props
 }) => {
-  const router = useRouter();
-
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  // this function will update the query params and will run on change but conditionally on the basis of, if queryName prop is coming
-  const updatQuery = (
-    __e: React.ChangeEvent<HTMLInputElement>,
-    __queryName: string
-  ) => {
-    router.push({
-      pathname: router.pathname,
-      query: { ...router.query, [__queryName]: __e.target.value },
-    });
-  };
   return (
     <InputStyled
       mb={mb}
@@ -59,40 +47,23 @@ const Input: React.FC<InputProps> = ({
     >
       {label && <label id={id}>{label}</label>}
       <div
-        className={`input-container ${error ? "border-error" : ""} `}
+        className={`input-container rounded-full bg-white shadow-md  ${
+          error ? "border-error" : ""
+        } `}
         tabIndex={1}
       >
-        {onChange ? (
+        {icon && <span className="px-3 text-gray-500">{icon}</span>}
+        {onChange && (
           <input
             type={type === "password" && passwordVisible ? "text" : type}
             id={id}
-            className={`input text-small-normal text-gray-900  ${inputClass} ${
-              type === "password"
-                ? "pr-[45px] px-6 py-[19px]"
-                : "px-6 py-[19px]"
-            }`}
+            className={`input text-gray-900 py-3 pr-3 ${inputClass}`}
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e)}
             disabled={disabled}
             {...props}
           />
-        ) : (
-          queryName && (
-            <input
-              type={type === "password" && passwordVisible ? "text" : type}
-              id={id}
-              className={`input text-small-normal text-gray-900  ${inputClass} ${
-                type === "password"
-                  ? "pr-[45px] px-6 py-[19px]"
-                  : "px-6 py-[19px]"
-              }`}
-              placeholder={placeholder}
-              value={router.query[queryName]}
-              onChange={(e) => updatQuery(e, queryName)}
-              {...props}
-            />
-          )
         )}
         {type === "password" && (
           <>
