@@ -15,14 +15,11 @@ interface ButtonProps {
     | "green"
     | "transparent"
     | "white"
-    | "blue"
-    | "white-blue"
-    | "dark-blue"
     | "black"
-    | "blue-dark"
     | "grey-transparent"
     | "grey"
-    | "light-grey";
+    | "light-grey"
+    | "red";
   size?: "sm" | "md";
   onClick?: () => void;
   iconStart?: React.ReactNode | string;

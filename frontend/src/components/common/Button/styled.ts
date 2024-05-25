@@ -5,14 +5,11 @@ type ButtonStyledProps = {
     | "green"
     | "transparent"
     | "white"
-    | "blue"
-    | "white-blue"
-    | "dark-blue"
     | "black"
-    | "blue-dark"
     | "grey-transparent"
     | "grey"
-    | "light-grey";
+    | "light-grey"
+    | "red";
   size: "sm" | "md";
 };
 
@@ -104,6 +101,13 @@ const generateButton = (variant: string) => {
         font-size: 16px;
         `;
 
+    case "red":
+      return `
+        background: var(--red) 0% 0% no-repeat padding-box;
+        border:none;
+        color: white;
+        `;
+
     default:
       return `
         background: white 0% 0% no-repeat padding-box;
@@ -188,6 +192,13 @@ const generateHoverStyling = (variant: string) => {
       font-weight: 700;
       font-size: 16px;      
       `;
+
+    case "red":
+      return `
+        background: var(--red-light) 0% 0% no-repeat padding-box;
+        border:none;
+        color: white;
+        `;
 
     default:
       return `

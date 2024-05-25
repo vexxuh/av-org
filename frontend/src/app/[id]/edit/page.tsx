@@ -2,14 +2,16 @@
 import Layout from "@/components/common/Layout";
 
 // Containers
-import Dashboard from "@/containers/Dashboard";
+import EditContainer from "@/containers/Edit";
 
-export default function Home() {
+const EditPage = () => {
   return (
     <main className="flex min-h-screen flex-col bg-gray-200">
-      <Layout navListingOptions={true}>
-        <Dashboard />
+      <Layout>
+        <EditContainer />
       </Layout>
     </main>
   );
-}
+};
+
+export default EditPage;

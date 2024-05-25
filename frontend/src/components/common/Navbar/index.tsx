@@ -34,15 +34,18 @@ import { LuPlus } from "react-icons/lu";
 import { SlEnergy } from "react-icons/sl";
 import { RiSoundModuleFill } from "react-icons/ri";
 
-const Navbar: React.FC = () => {
+type NavbarProps = {
+  listingOptions?: boolean;
+};
+
+const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
   const [search, setSearch] = useState("");
-  const [selectedOption, setSelectedOption] = useState("apple");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
   return (
-    <section className="flex items-center justify-center">
+    <section className="flex items-center justify-center border-b-[1px] border-gray-300">
       <div className="max-w-[1900px] w-full mx-auto flex items-center justify-between px-5 py-7">
         <article className="flex items-center gap-2 ">
           <div className="flex items-center gap-3">
@@ -57,65 +60,76 @@ const Navbar: React.FC = () => {
                 </i>
               </h1>
             </Link>
-
-            <hr className="w-8 h-[0.5px] border-none bg-gray-500 rotate-90" />
           </div>
 
-          <div className="max-w-96 w-full">
-            <Input
-              id="search"
-              onChange={handleChange}
-              placeholder="Search"
-              icon={<FaSearch />}
-              mb={0}
-            />
-          </div>
-
-          <div className="rounded-full overflow-hidden w-20">
-            <Button variant="grey" className="rounded-full">
-              <div className="rotate-90">
-                <RiSoundModuleFill />
+          {listingOptions && (
+            <div className="flex items-center gap-3">
+              <hr className="w-8 h-[0.5px] border-none bg-gray-500 rotate-90" />
+              <div className="max-w-96 w-full">
+                <Input
+                  id="search"
+                  onChange={handleChange}
+                  placeholder="Search"
+                  icon={<FaSearch />}
+                  mb={0}
+                  value={search}
+                />
               </div>
-            </Button>
-          </div>
+
+              <div className="rounded-full overflow-hidden w-20">
+                <Button variant="grey" className="rounded-full">
+                  <div className="rotate-90">
+                    <RiSoundModuleFill />
+                  </div>
+                </Button>
+              </div>
+            </div>
+          )}
         </article>
 
         <article className="flex items-center gap-4">
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span>
-                  <Button
-                    variant="grey"
-                    size="sm"
-                    iconEnd={<IoIosArrowDown />}
-                    iconStart={<LuPlus />}
-                    className="rounded-full"
-                  >
-                    Add
-                  </Button>
-                </span>
-              </DropdownMenuTrigger>
+          {listingOptions && (
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <span>
+                    <Button
+                      variant="grey"
+                      size="sm"
+                      iconEnd={<IoIosArrowDown />}
+                      iconStart={<LuPlus />}
+                      className="rounded-full"
+                    >
+                      Add
+                    </Button>
+                  </span>
+                </DropdownMenuTrigger>
 
-              <DropdownMenuContent className="bg-white shadow-lg rounded-lg mt-1 w-32 flex gap-2 flex-col overflow-hidden">
-                <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
-                  <SlEnergy className=" h-4 w-4" />
+                <DropdownMenuContent className="bg-white shadow-lg rounded-lg mt-1 w-32 flex gap-2 flex-col overflow-hidden">
+                  <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
+                    <SlEnergy className=" h-4 w-4" />
 
-                  <span>Quick</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
-                  <MdDynamicForm className=" h-4 w-4" />
+                    <span>Quick</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none">
+                    <Link
+                      href="/detailed-add"
+                      className="flex items-center gap-2"
+                    >
+                      <MdDynamicForm className=" h-4 w-4" />
 
-                  <span>Detailed</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                      <span>Detailed</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <span className="text-gray-600 cursor-pointer flex items-center justify-center">
-                <MdAccountCircle fontSize={32} />
+                <MdAccountCircle fontSize={36} />
               </span>
             </DropdownMenuTrigger>
 

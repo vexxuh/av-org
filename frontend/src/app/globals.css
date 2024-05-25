@@ -4,3 +4,10 @@
 
 @layer utilities {
 }
+
+@layer base {
+  :root {
+    --red: #ff0000;
+    --red-light: #ff4d4d;
+  }
+}

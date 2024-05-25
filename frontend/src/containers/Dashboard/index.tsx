@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
   return (
     <section className="">
       <div className="max-w-[1900px] w-full mx-auto p-5">
-        <article className="flex items-center p-3 bg-white shadow-md rounded-2xl text-sm">
+        <article className="flex p-3 bg-white shadow-md rounded-2xl text-sm text-nowrap">
           <div className="w-1/4">
             <Table className="border-r-[2px]">
               <TableHeader>
@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
           </div>
           <Table className="w-full">
             <TableHeader>
-              <TableRow className="text-nowrap">
+              <TableRow>
                 <TableHead>Manufacturer</TableHead>
                 <TableHead>Device Model</TableHead>
                 <TableHead>Serial Number</TableHead>

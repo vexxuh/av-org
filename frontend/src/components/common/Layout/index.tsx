@@ -5,12 +5,16 @@ import Navbar from "../Navbar";
 
 interface LayoutProps {
   children: React.ReactNode;
+  navListingOptions?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  navListingOptions = false,
+}) => {
   return (
     <main className="overflow-x-hidden min-h-[calc(100vh - 80px)]">
-      <Navbar />
+      <Navbar listingOptions={navListingOptions} />
       {children}
     </main>
   );

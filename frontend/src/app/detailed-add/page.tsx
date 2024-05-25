@@ -2,14 +2,16 @@
 import Layout from "@/components/common/Layout";
 
 // Containers
-import Dashboard from "@/containers/Dashboard";
+import DetailedAddContainer from "@/containers/DetailedAdd";
 
-export default function Home() {
+const DetailedAddPage = () => {
   return (
     <main className="flex min-h-screen flex-col bg-gray-200">
-      <Layout navListingOptions={true}>
-        <Dashboard />
+      <Layout>
+        <DetailedAddContainer />
       </Layout>
     </main>
   );
-}
+};
+
+export default DetailedAddPage;
