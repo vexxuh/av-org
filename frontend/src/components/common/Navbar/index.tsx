@@ -106,10 +106,15 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="bg-white shadow-lg rounded-lg mt-1 w-32 flex gap-2 flex-col overflow-hidden">
-                  <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
-                    <SlEnergy className=" h-4 w-4" />
+                  <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none">
+                    <Link
+                      href="/?modal=quick-add"
+                      className="flex items-center gap-2"
+                    >
+                      <SlEnergy className=" h-4 w-4" />
 
-                    <span>Quick</span>
+                      <span>Quick</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none">
                     <Link
