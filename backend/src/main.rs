@@ -1,3 +1,6 @@
+pub mod models;
+pub mod routes;
+
 #[macro_use]
 extern crate rocket;
 

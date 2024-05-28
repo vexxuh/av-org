@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 
 // Styled
-import { InputStyled } from "../BaseStyle/styled";
 
 // Types
 import { InputBaseProps } from "../BaseTypes";
@@ -33,31 +32,28 @@ const Input: React.FC<InputProps> = ({
   inputClass,
   disabled,
   icon,
+  rounded = "rounded-full",
+  border = "",
   ...props
 }) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   return (
-    <InputStyled
-      mb={mb}
-      preInputText={preInputText}
-      postInputText={postInputText}
-      lowercase={lowercase}
-      disabled={disabled}
-    >
-      {label && <label id={id}>{label}</label>}
+    <div className={`mb-${mb}`}>
+      {label && <label htmlFor={id}>{label}</label>}
       <div
-        className={`input-container rounded-full bg-white shadow-md  ${
+        className={`${rounded} shadow-md flex items-center w-full overflow-hidden bg-white ${
           error ? "border-error" : ""
-        } `}
-        tabIndex={1}
+        } ${border}`}
       >
-        {icon && <span className="px-3 text-gray-500">{icon}</span>}
+        {icon && (
+          <span className="px-3 text-gray-500 flex items-center">{icon}</span>
+        )}
         {onChange && (
           <input
             type={type === "password" && passwordVisible ? "text" : type}
             id={id}
-            className={`input text-gray-900 py-3 pr-3 ${inputClass}`}
+            className={`text-gray-900 py-3 px-3 w-full outline-none ${inputClass}`}
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e)}
@@ -66,23 +62,16 @@ const Input: React.FC<InputProps> = ({
           />
         )}
         {type === "password" && (
-          <>
-            {!passwordVisible ? (
-              <span
-                className="absolute right-[23px] top-1/2 -translate-y-1/2 w-5 flex items-center justify-center text-[#B8B8B8] cursor-pointer"
-                onClick={() => setPasswordVisible(!passwordVisible)}
-              >
-                <AiOutlineEyeInvisible fontSize={23} />
-              </span>
+          <span
+            className="absolute right-[23px] top-1/2 -translate-y-1/2 w-5 flex items-center justify-center text-[#B8B8B8] cursor-pointer"
+            onClick={() => setPasswordVisible(!passwordVisible)}
+          >
+            {passwordVisible ? (
+              <AiOutlineEye fontSize={23} />
             ) : (
-              <span
-                className="absolute right-[23px] top-1/2 -translate-y-1/2 w-5 flex items-center justify-center text-[#B8B8B8] cursor-pointer"
-                onClick={() => setPasswordVisible(!passwordVisible)}
-              >
-                <AiOutlineEye fontSize={23} />
-              </span>
+              <AiOutlineEyeInvisible fontSize={23} />
             )}
-          </>
+          </span>
         )}
         {preInputText && (
           <span className="pre-input-text text-small-normal-gray">
@@ -93,13 +82,13 @@ const Input: React.FC<InputProps> = ({
           <span className="post-input-text text-small-normal-gray">
             {postInputText}
           </span>
-        )}{" "}
+        )}
       </div>
       {!helperText && error && typeof error === "string" && (
-        <p className="error ">{error}</p>
+        <p className="error">{error}</p>
       )}
       {helperText && <p className="mt-2 text-xs text-gray-800">{helperText}</p>}
-    </InputStyled>
+    </div>
   );
 };
 

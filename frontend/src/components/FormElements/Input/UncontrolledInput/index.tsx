@@ -5,7 +5,6 @@ import { useFormContext } from "react-hook-form";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 
 // Styled
-import { InputStyled } from "../BaseStyle/styled";
 
 // Types
 import { InputBaseProps } from "../BaseTypes";
@@ -27,6 +26,8 @@ const Input: React.FC<InputBaseProps> = ({
   button,
   maxLength,
   minLength,
+  rounded = "rounded-full",
+  border = "",
   ...props
 }) => {
   const { register, setFocus } = useFormContext();
@@ -36,67 +37,51 @@ const Input: React.FC<InputBaseProps> = ({
     setFocus(id);
   };
   return (
-    <InputStyled
-      mb={mb}
-      preInputText={preInputText}
-      postInputText={postInputText}
-      lowercase={lowercase}
-      onClick={activeInput}
-      disabled={disabled}
-      type={type}
-    >
-      {label && <label id={id}>{label}</label>}
+    <div className={`mb-${mb} w-full`}>
+      {label && <label htmlFor={id}>{label}</label>}
       <div
-        className={`input-container relative  ${error ? "border-error" : ""}`}
-        tabIndex={1}
+        className={`${rounded} shadow-md flex items-center overflow-hidden  bg-white ${
+          error ? "border-error" : ""
+        } ${border}`}
       >
         <input
           type={type === "password" && passwordVisible ? "text" : type}
           id={id}
-          className={`input text-small-normal text-gray-900  ${
-            type === "password" ? "pr-[45px] px-6 py-[19px]" : "px-6 py-[19px]"
-          } ${inputClass || ""}`}
+          className={`text-small-normal text-gray-900 py-3 px-3 w-full outline-none ${
+            inputClass || ""
+          }`}
           disabled={disabled}
           placeholder={placeholder}
           {...register(id)}
           {...props}
         />
         {type === "password" && (
-          <>
-            {!passwordVisible ? (
-              <span
-                className="absolute right-[23px] top-1/2 -translate-y-1/2 w-5 flex items-center justify-center text-[#B8B8B8] cursor-pointer"
-                onClick={() => setPasswordVisible(!passwordVisible)}
-              >
-                <AiOutlineEyeInvisible fontSize={23} />
-              </span>
+          <span
+            className="absolute right-[23px] top-1/2 -translate-y-1/2 w-5 flex items-center justify-center text-[#B8B8B8] cursor-pointer"
+            onClick={() => setPasswordVisible(!passwordVisible)}
+          >
+            {passwordVisible ? (
+              <AiOutlineEye fontSize={23} />
             ) : (
-              <span
-                className="absolute right-[23px] top-1/2 -translate-y-1/2 w-5 flex items-center justify-center text-[#B8B8B8] cursor-pointer"
-                onClick={() => setPasswordVisible(!passwordVisible)}
-              >
-                <AiOutlineEye fontSize={23} />
-              </span>
+              <AiOutlineEyeInvisible fontSize={23} />
             )}
-          </>
+          </span>
         )}
         {preInputText && <span className="pre-input-text">{preInputText}</span>}
       </div>
       {(postInputText || minLength || maxLength) && (
-        <span className="post-input-text flex justify-end">
+        <span className="flex justify-end">
           {postInputText ||
             (minLength && `Min ${minLength}`) ||
             (maxLength && `Max ${maxLength}`)}
         </span>
       )}
       {!helperText && error && typeof error === "string" && (
-        <p className="error  mt-1 font-inter text-xs font-light text-red-500">
-          {error}
-        </p>
+        <p className="mt-1 text-xs text-red-500">{error}</p>
       )}
       {helperText && <p className="mt-2 text-xs text-gray-800">{helperText}</p>}
       {button && <>{button}</>}
-    </InputStyled>
+    </div>
   );
 };
 

@@ -40,10 +40,12 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
   const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
+
   return (
     <section className="flex items-center justify-center border-b-[1px] border-gray-300">
       <div className="max-w-[1900px] w-full mx-auto flex items-center justify-between px-5 py-7">
@@ -64,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
 
           {listingOptions && (
             <div className="flex items-center gap-3">
-              <hr className="w-8 h-[0.5px] border-none bg-gray-500 rotate-90" />
+              <hr className="w-10 h-[0.5px] border-none bg-gray-500 rotate-90" />
               <div className="max-w-96 w-full">
                 <Input
                   id="search"
@@ -73,6 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                   icon={<FaSearch />}
                   mb={0}
                   value={search}
+                  className="h-[40px] outline-none"
                 />
               </div>
 
@@ -90,7 +93,10 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
         <article className="flex items-center gap-4">
           {listingOptions && (
             <div>
-              <DropdownMenu>
+              <DropdownMenu
+                onOpenChange={(isOpen) => setIsOpen(isOpen)}
+                open={isOpen}
+              >
                 <DropdownMenuTrigger asChild>
                   <span>
                     <Button
@@ -105,14 +111,18 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                   </span>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent className="bg-white shadow-lg rounded-lg mt-1 w-32 flex gap-2 flex-col overflow-hidden">
+                <DropdownMenuContent
+                  className={`bg-white shadow-lg rounded-lg mt-1 w-32 flex gap-2 flex-col overflow-hidden ${
+                    isOpen ? "visible" : "hidden"
+                  }`}
+                >
                   <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none">
                     <Link
                       href="/?modal=quick-add"
                       className="flex items-center gap-2"
+                      onClick={() => setIsOpen(false)}
                     >
-                      <SlEnergy className=" h-4 w-4" />
-
+                      <SlEnergy className="h-4 w-4" />
                       <span>Quick</span>
                     </Link>
                   </DropdownMenuItem>
@@ -121,8 +131,7 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                       href="/detailed-add"
                       className="flex items-center gap-2"
                     >
-                      <MdDynamicForm className=" h-4 w-4" />
-
+                      <MdDynamicForm className="h-4 w-4" />
                       <span>Detailed</span>
                     </Link>
                   </DropdownMenuItem>
@@ -134,7 +143,7 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <span className="text-gray-600 cursor-pointer flex items-center justify-center">
-                <MdAccountCircle fontSize={36} />
+                <MdAccountCircle fontSize={40} />
               </span>
             </DropdownMenuTrigger>
 

@@ -50,7 +50,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   return (
     <Modal onClose={handleClose}>
       <div className="bg-white p-5 rounded-lg w-[700px] text-black flex flex-col gap-10 py-10">
-        <header className="flex items-center justify-center">
+        <header className="flex items-center justify-center w-full">
           <h1 className="text-2xl font-bold w-full">Quick Add</h1>
 
           <span
@@ -64,15 +64,17 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
         <article className="w-full">
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-5 w-full  mx-auto"
+            className="flex flex-col gap-5 w-full mx-auto"
           >
             <FormProvider {...form}>
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex items-center gap-3">
                 <Input
                   id="manufacturer"
                   placeholder="Manufacturer"
                   error={errors?.manufacturer?.message}
                   required
+                  rounded="rounded-md"
+                  border="border-[1px] border-[#415778]"
                 />
 
                 <Input
@@ -80,6 +82,8 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   placeholder="Device Model"
                   error={errors?.deviceModel?.message}
                   required
+                  rounded="rounded-md"
+                  border="border-[1px] border-[#415778]"
                 />
               </div>
 
@@ -89,17 +93,21 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   placeholder="Serial Number"
                   error={errors?.serialNumber?.message}
                   required
+                  rounded="rounded-md"
+                  border="border-[1px] border-[#415778]"
                 />
 
                 <Input
                   id="primaryMAC"
                   placeholder="Primary MAC"
                   error={errors?.primaryMAC?.message}
+                  rounded="rounded-md"
                   required
+                  border="border-[1px] border-[#415778]"
                 />
               </div>
 
-              <Button type="submit" size="md" variant="grey-transparent">
+              <Button type="submit" size="md" variant="grey">
                 Add Gear
               </Button>
             </FormProvider>

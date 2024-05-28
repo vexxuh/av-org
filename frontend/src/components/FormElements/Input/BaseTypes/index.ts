@@ -15,4 +15,6 @@ export type InputBaseProps = React.HTMLProps<HTMLInputElement> & {
   required?: boolean;
   disabled?: boolean;
   button?: React.ReactNode;
+  rounded?: string;
+  border?: string;
 };

@@ -11,6 +11,8 @@ const editItemSchema = yup.object().shape({
   hostname: yup.string().required(),
   firmware: yup.string().required(),
   password: yup.string().required(),
+  location: yup.string().required(),
+  room: yup.string().required(),
 });
 
 export default editItemSchema;
