@@ -76,6 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                   mb={0}
                   value={search}
                   className="h-[40px] outline-none"
+                  rounded="rounded-full"
                 />
               </div>
 

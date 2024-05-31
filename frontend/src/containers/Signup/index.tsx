@@ -2,28 +2,31 @@
 
 import React, { useState } from "react";
 
-// React Hook Form
-import { FormProvider, useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-
 // Next
 import Image from "next/image";
 import Link from "next/link";
 
+// React Hook Form
+import { FormProvider, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+
 // React Icons
 import { FaGears } from "react-icons/fa6";
+
+// React Hot Toast
+import { Toaster, toast } from "react-hot-toast";
+
+// Clerk
+import { useSignUp, SignUp } from "@clerk/nextjs";
 
 // Components
 import { FacebookIcon, GoogleIcon } from "@/components/icons";
 import Input from "@/components/FormElements/Input/UncontrolledInput";
 import Button from "@/components/common/Button";
-import Select from "@/components/FormElements/Select";
-
-// Styled
-import { SignupStyled } from "./styled";
 
 // Schema
 import signupSchema from "./schema";
+import { useRouter } from "next/navigation";
 
 type FormValues = {
   firstName: string;
@@ -34,9 +37,14 @@ type FormValues = {
 };
 
 const SignupContainer = () => {
+  const { signUp, isLoaded } = useSignUp();
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: yupResolver(signupSchema),
   });
+
+  const { push } = useRouter();
 
   const {
     formState: { errors },
@@ -44,11 +52,26 @@ const SignupContainer = () => {
   } = form;
 
   const onSubmit = async (values: FormValues) => {
-    console.log("values", values);
+    setIsLoading(true);
+    try {
+      await signUp?.create({
+        emailAddress: values.email,
+        password: values.password,
+      });
+
+      toast.success("Account created successfully");
+
+      push("/login");
+    } catch (err) {
+      console.log("err", err);
+      toast.error("An error occurred, please try again");
+    }
+    setIsLoading(false);
   };
 
   return (
-    <SignupStyled className="w-screen min-h-screen bg-gray-100 login-container h-full overflow-hidden">
+    <main className="w-screen min-h-screen bg-gray-100 login-container h-full overflow-hidden">
+      <Toaster />
       <div className="flex w-screen h-full">
         {/* Design Section */}
         {/* <section className="relative none hidden lg:block lg:w-1/2 max-h-screen">
@@ -87,14 +110,29 @@ const SignupContainer = () => {
           <article className="flex flex-col gap-10 items-center justify-center">
             <div className="flex items-center justify-center flex-col gap-2">
               <h1 className="text-3xl font-semibold font-poppins leading-10 text-center">
-                Get Started With FreelanceQuest
+                Get Started With AV Gear
               </h1>
-              <h6 className="text-md font-normal font-poppins leading-7 text-[#7E7E7E]">
-                Create an Account to cash your skills
-              </h6>
+              {/* <h6 className="text-md font-normal font-poppins leading-7 text-[#7E7E7E]">
+                Create your Account
+              </h6> */}
             </div>
 
-            <div className="flex items-center gap-4">
+            <SignUp
+              appearance={{
+                elements: {
+                  formButtonPrimary: "bg-green-600",
+                  formButtonSecondary: "bg-white",
+                  formButtonSecondaryText: "text-black",
+                  formButtonPrimaryText: "text-white",
+                  footer: "hidden",
+                },
+              }}
+              signInUrl="/login"
+              forceRedirectUrl="/login"
+              signInForceRedirectUrl="/login"
+            />
+
+            {/* <div className="flex items-center gap-4">
               <button className="w-32 h-11 bg-white rounded border border-neutral-200 hover:border-green-500 hover:shadow-md cursor-pointer flex items-center justify-center gap-3 ease-in-out duration-300 transition-all">
                 <span>
                   <GoogleIcon />
@@ -111,17 +149,17 @@ const SignupContainer = () => {
                   Facebook
                 </p>
               </button>
-            </div>
-
+            </div> */}
+            {/* 
             <div className="flex items-center gap-3">
               <hr className="bg-[#dbdbdb] border-none h-[1px] w-[140px]" />
               <p className="text-black text-xs font-medium font-poppins leading-none whitespace-nowrap">
                 Or continue with
               </p>
               <hr className="bg-[#dbdbdb] border-none h-[1px] w-[140px]" />
-            </div>
+            </div> */}
 
-            <FormProvider {...form}>
+            {/* <FormProvider {...form}>
               <form
                 className="max-w-[400px] w-full"
                 onSubmit={handleSubmit(onSubmit)}
@@ -133,7 +171,7 @@ const SignupContainer = () => {
                       placeholder="First Name"
                       type="text"
                       required
-                      disabled={false}
+                      disabled={isLoading}
                       mb={21}
                       error={errors?.firstName?.message}
                     />
@@ -144,7 +182,7 @@ const SignupContainer = () => {
                       placeholder="Last Name"
                       type="text"
                       required
-                      disabled={false}
+                      disabled={isLoading}
                       mb={21}
                       error={errors?.lastName?.message}
                     />
@@ -156,7 +194,7 @@ const SignupContainer = () => {
                     placeholder="Email"
                     type="email"
                     required
-                    disabled={false}
+                    disabled={isLoading}
                     mb={21}
                     error={errors?.email?.message}
                   />
@@ -168,7 +206,7 @@ const SignupContainer = () => {
                     type="password"
                     required
                     mb={21}
-                    disabled={false}
+                    disabled={isLoading}
                     error={errors?.password?.message}
                   />
                 </div>
@@ -179,7 +217,7 @@ const SignupContainer = () => {
                     type="password"
                     required
                     mb={21}
-                    disabled={false}
+                    disabled={isLoading}
                     error={errors?.confirmPassword?.message}
                   />
                 </div>
@@ -187,13 +225,14 @@ const SignupContainer = () => {
                 <Button
                   type="submit"
                   size="md"
-                  variant="grey-transparent"
+                  variant="grey"
                   disabled={false}
+                  isLoading={isLoading}
                 >
                   Create Account
                 </Button>
               </form>
-            </FormProvider>
+            </FormProvider> */}
 
             <p className="text-zinc-600 text-sm font-light font-poppins">
               By continuing you indicate that you read and agreed to the Terms
@@ -202,7 +241,7 @@ const SignupContainer = () => {
           </article>
         </section>
       </div>
-    </SignupStyled>
+    </main>
   );
 };
 

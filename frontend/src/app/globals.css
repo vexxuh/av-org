@@ -11,3 +11,7 @@
     --red-light: #ff4d4d;
   }
 }
+
+.cl-formButtonPrimary:hover {
+  background-color: rgba(21, 128, 60, 0.856);
+}

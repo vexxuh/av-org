@@ -8,8 +8,10 @@ import { yupResolver } from "@hookform/resolvers/yup";
 
 // Next
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
+
+// Toast
+import { Toaster, toast } from "react-hot-toast";
 
 // React Icons
 import { FaGears } from "react-icons/fa6";
@@ -20,11 +22,9 @@ import Input from "@/components/FormElements/Input/UncontrolledInput";
 import CheckboxSwitch from "@/components/FormElements/Switch";
 import Button from "@/components/common/Button";
 
-// Styled
-import { LoginStyled } from "./styled";
-
 // Schema
 import loginSchema from "./schema";
+import { useSignIn } from "@clerk/nextjs";
 
 // Utils
 
@@ -35,6 +35,9 @@ type FormValues = {
 
 const LoginContainer = () => {
   const [remember, SetRemember] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { signIn } = useSignIn();
 
   const { push } = useRouter();
 
@@ -47,10 +50,39 @@ const LoginContainer = () => {
     handleSubmit,
   } = form;
 
-  const onSubmit = async (values: FormValues) => {};
+  const onSubmit = async (values: FormValues) => {
+    setIsLoading(true);
+    try {
+      await signIn?.create({
+        identifier: values.email,
+        password: values.password,
+        token: remember ? "long" : "short",
+        redirectUrl: "/dashboard",
+      });
+
+      push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      form.setError("email", {
+        type: "manual",
+        message: "Invalid email or password",
+      });
+
+      form.setError("password", {
+        type: "manual",
+        message: "Invalid email or password",
+      });
+
+      toast.error("Invalid email or password");
+    }
+
+    setIsLoading(false);
+  };
 
   return (
-    <LoginStyled className="w-screen min-h-screen bg-gray-100 login-container h-full">
+    <main className="w-screen min-h-screen bg-gray-100 login-container h-full">
+      <Toaster />
+
       <div className="flex items-center justify-center w-screen h-full z-10 relative">
         {/* Form Section */}
         <section className="pt-10 px-14 w-full flex flex-col gap-28">
@@ -87,7 +119,7 @@ const LoginContainer = () => {
               </h6>
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* <div className="flex items-center gap-4">
               <button className="w-32 h-11 bg-white rounded border border-neutral-200 hover:border-green-500 hover:shadow-md cursor-pointer flex items-center justify-center gap-3 ease-in-out duration-300 transition-all">
                 <span>
                   <GoogleIcon />
@@ -112,7 +144,7 @@ const LoginContainer = () => {
                 Or continue with
               </p>
               <hr className="bg-[#dbdbdb] border-none h-[1px] w-[140px]" />
-            </div>
+            </div> */}
 
             <FormProvider {...form}>
               <form
@@ -125,8 +157,9 @@ const LoginContainer = () => {
                     placeholder="Email"
                     type="email"
                     required
-                    mb={38}
+                    mb={21}
                     error={errors?.email?.message}
+                    disabled={isLoading}
                   />
                   <Input
                     id="password"
@@ -134,6 +167,7 @@ const LoginContainer = () => {
                     type="password"
                     required
                     mb={21}
+                    disabled={isLoading}
                     error={errors?.password?.message}
                   />
                 </div>
@@ -156,7 +190,12 @@ const LoginContainer = () => {
                   </Link>
                 </div>
 
-                <Button type="submit" size="md" variant="grey-transparent">
+                <Button
+                  type="submit"
+                  size="md"
+                  variant="grey"
+                  isLoading={isLoading}
+                >
                   Log In
                 </Button>
               </form>
@@ -173,7 +212,7 @@ const LoginContainer = () => {
           />
         </section> */}
       </div>
-    </LoginStyled>
+    </main>
   );
 };
 

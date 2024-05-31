@@ -94,7 +94,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Manufacturer"
                   error={errors?.manufacturer?.message}
                   required
-                  rounded="rounded-md"
                 />
 
                 <Input
@@ -102,7 +101,6 @@ const DetailedAddContainer: React.FC = () => {
                   label="Device Model"
                   placeholder="Device Model"
                   error={errors?.deviceModel?.message}
-                  rounded="rounded-md"
                   required
                 />
 
@@ -196,7 +194,6 @@ const DetailedAddContainer: React.FC = () => {
                   label="Serial Number"
                   placeholder="Serial Number"
                   error={errors?.serialNumber?.message}
-                  rounded="rounded-md"
                   required
                 />
 
@@ -206,7 +203,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Hostname"
                   error={errors?.hostname?.message}
                   required
-                  rounded="rounded-md"
                 />
 
                 <Input
@@ -215,7 +211,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Firmware"
                   error={errors?.firmware?.message}
                   required
-                  rounded="rounded-md"
                 />
 
                 <Input
@@ -224,7 +219,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Password"
                   error={errors?.password?.message}
                   required
-                  rounded="rounded-md"
                 />
 
                 <Input
@@ -233,7 +227,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Primary MAC"
                   error={errors?.primaryMAC?.message}
                   required
-                  rounded="rounded-md"
                 />
 
                 <Input
@@ -242,7 +235,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Primary IP"
                   error={errors?.primaryIP?.message}
                   required
-                  rounded="rounded-md"
                 />
 
                 <Input
@@ -250,7 +242,6 @@ const DetailedAddContainer: React.FC = () => {
                   label="Secondary MAC"
                   placeholder="Secondary MAC"
                   error={errors?.secondaryMAC?.message}
-                  rounded="rounded-md"
                   required
                 />
 
@@ -260,7 +251,6 @@ const DetailedAddContainer: React.FC = () => {
                   placeholder="Secondary IP"
                   error={errors?.secondaryIP?.message}
                   required
-                  rounded="rounded-md"
                 />
               </div>
 

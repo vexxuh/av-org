@@ -26,7 +26,7 @@ const Input: React.FC<InputBaseProps> = ({
   button,
   maxLength,
   minLength,
-  rounded = "rounded-full",
+  rounded = "rounded-md",
   border = "",
   ...props
 }) => {
@@ -37,10 +37,15 @@ const Input: React.FC<InputBaseProps> = ({
     setFocus(id);
   };
   return (
-    <div className={`mb-${mb} w-full`}>
+    <div
+      className={`w-full`}
+      style={{
+        marginBottom: `${mb}px`,
+      }}
+    >
       {label && <label htmlFor={id}>{label}</label>}
       <div
-        className={`${rounded} shadow-md flex items-center overflow-hidden  bg-white ${
+        className={`${rounded} shadow-md flex items-center overflow-hidden relative bg-white ${
           error ? "border-error" : ""
         } ${border}`}
       >

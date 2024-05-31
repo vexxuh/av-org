@@ -73,7 +73,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   placeholder="Manufacturer"
                   error={errors?.manufacturer?.message}
                   required
-                  rounded="rounded-md"
                   border="border-[1px] border-[#415778]"
                 />
 
@@ -82,7 +81,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   placeholder="Device Model"
                   error={errors?.deviceModel?.message}
                   required
-                  rounded="rounded-md"
                   border="border-[1px] border-[#415778]"
                 />
               </div>
@@ -93,7 +91,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   placeholder="Serial Number"
                   error={errors?.serialNumber?.message}
                   required
-                  rounded="rounded-md"
                   border="border-[1px] border-[#415778]"
                 />
 
@@ -101,7 +98,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   id="primaryMAC"
                   placeholder="Primary MAC"
                   error={errors?.primaryMAC?.message}
-                  rounded="rounded-md"
                   required
                   border="border-[1px] border-[#415778]"
                 />

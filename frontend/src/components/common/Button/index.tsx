@@ -71,9 +71,9 @@ const Button: React.FC<ButtonProps> = ({
         </span>
       )}
       {isLoading && (
-        <span className="absolute top-1/2 right-4 -translate-y-1/2">
+        <span className={size === "md" ? "w-4" : "w-3"}>
           <LoaderComponent
-            size={size === "md" ? 20 : 14}
+            size={size === "md" ? 17 : 14}
             color={generateLoaderColor(variant)}
           />
         </span>

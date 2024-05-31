@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+
+// Styles
 import "./globals.css";
+
+// Clerk
+import { ClerkProvider } from "@clerk/nextjs";
 
 // Containers
 import Modals from "@/containers/Modals";
@@ -18,11 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <Modals />
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={inter.className}>
+          <Modals />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
