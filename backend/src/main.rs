@@ -1,15 +1,18 @@
-pub mod models;
-pub mod routes;
-
 #[macro_use]
 extern crate rocket;
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
-}
+mod db;
+mod models;
+mod routes;
+mod schema;
+
+use db::DBConnect;
+use rocket::routes;
+use routes::{create_user, get_users};
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+    rocket::build()
+        .attach(DBConnect::fairing())
+        .mount("/", routes![create_user, get_users])
 }
