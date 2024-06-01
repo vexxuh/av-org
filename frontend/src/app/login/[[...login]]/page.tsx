@@ -72,6 +72,7 @@ const Login: React.FC = () => {
                   footer: "hidden",
                 },
               }}
+              forceRedirectUrl={"/dashboard"}
             />
           </article>
         </section>
