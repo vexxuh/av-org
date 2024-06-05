@@ -21,4 +21,5 @@ fn rocket() -> _ {
         .mount("/api/v1/customer", routes::customer::routes())
         .mount("/api/v1/location", routes::location::routes())
         .mount("/api/v1/room", routes::room::routes())
+        .mount("/api/v1/gear_item", routes::gear_item::routes())
 }
