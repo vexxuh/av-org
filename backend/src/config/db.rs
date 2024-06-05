@@ -9,7 +9,6 @@ static DB: OnceCell<SqlitePool> = OnceCell::const_new();
 pub async fn init_db() -> Result<SqlitePool, sqlx::Error> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    // Create the database file if it doesn't exist
     if !Path::new(&database_url).exists() {
         fs::File::create(&database_url).expect("Failed to create database file");
     }
@@ -27,7 +26,7 @@ pub fn init() -> AdHoc {
             }
         };
 
-        if let Err(e) = crate::schema::user::create_user_table(&pool).await {
+        if let Err(e) = crate::schema::create_tables(&pool).await {
             eprintln!("Failed to create user table: {}", e);
             std::process::exit(1);
         }

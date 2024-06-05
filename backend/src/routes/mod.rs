@@ -1,1 +1,3 @@
-pub mod user;
+pub mod customer;
+pub mod location;
+pub mod room;

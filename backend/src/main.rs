@@ -15,7 +15,10 @@ use std::env;
 #[launch]
 fn rocket() -> _ {
     dotenv().ok();
+
     rocket::build()
         .attach(db::init())
-        .mount("/users", routes::user::routes())
+        .mount("/api/v1/customer", routes::customer::routes())
+        .mount("/api/v1/location", routes::location::routes())
+        .mount("/api/v1/room", routes::room::routes())
 }
