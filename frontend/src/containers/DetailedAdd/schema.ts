@@ -2,12 +2,12 @@ import * as yup from "yup";
 
 const detailedAddSchema = yup.object().shape({
   manufacturer: yup.string().required(),
-  deviceModel: yup.string().required(),
-  serialNumber: yup.string().required(),
-  primaryMAC: yup.string().required(),
-  primaryIP: yup.string().required(),
-  secondaryMAC: yup.string().required(),
-  secondaryIP: yup.string().required(),
+  device_model: yup.string().required(),
+  serial_number: yup.string().required(),
+  primary_mac: yup.string().required(),
+  primary_ip: yup.string().required(),
+  secondary_mac: yup.string().required(),
+  secondary_ip: yup.string().required(),
   hostname: yup.string().required(),
   firmware: yup.string().required(),
   password: yup.string().required(),

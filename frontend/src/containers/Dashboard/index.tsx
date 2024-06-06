@@ -8,12 +8,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/common/Tables";
+import { Paths } from "@/utils/config/paths";
+import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
+
+  const [data, setData] = useState<any>([]);
+
+  const handleFetchItems = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`
+      );
+
+      setData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    handleFetchItems();
+  }, []);
+
   return (
     <section className="">
       <div className="max-w-[1900px] w-full mx-auto p-5">
@@ -29,11 +50,11 @@ const Dashboard: React.FC = () => {
               </TableHeader>
 
               <TableBody>
-                {Array.from({ length: 10 }).map((item, _id) => (
-                  <TableRow key={_id} className="cursor-pointer">
-                    <TableCell>Avery Dennison</TableCell>
-                    <TableCell>Building #22</TableCell>
-                    <TableCell>3W1</TableCell>
+                {data?.map((item: any) => (
+                  <TableRow key={item?.id} className="cursor-pointer">
+                    <TableCell>{item?.customer_id}</TableCell>
+                    <TableCell>{item?.location}</TableCell>
+                    <TableCell>{item?.room_id}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -56,22 +77,22 @@ const Dashboard: React.FC = () => {
             </TableHeader>
 
             <TableBody>
-              {Array.from({ length: 10 }).map((item, _id) => (
+              {data?.map((item: any) => (
                 <TableRow
-                  onClick={() => router.push("/devices")}
+                  onClick={() => router.push(`/${item?.id}`)}
                   className=" cursor-pointer"
-                  key={_id}
+                  key={item?.id}
                 >
-                  <TableCell>Crestron</TableCell>
-                  <TableCell>HD-DA2-4KZ-E</TableCell>
-                  <TableCell>21568479512</TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>1.0.34</TableCell>
-                  <TableCell>Root AV Password</TableCell>
+                  <TableCell>{item?.manufacturer}</TableCell>
+                  <TableCell>{item?.device_model}</TableCell>
+                  <TableCell>{item?.serial_number}</TableCell>
+                  <TableCell>{item?.primary_mac}</TableCell>
+                  <TableCell>{item?.primary_ip}</TableCell>
+                  <TableCell>{item?.secondary_mac}</TableCell>
+                  <TableCell>{item?.secondary_ip}</TableCell>
+                  <TableCell>{item?.hostname}</TableCell>
+                  <TableCell>{item?.firmware}</TableCell>
+                  <TableCell>{item?.password}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

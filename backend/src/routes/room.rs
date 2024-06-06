@@ -5,6 +5,11 @@ use rocket::{delete, get, post, put};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
+/**
+ * Create Room
+ * @param room: Json<Room>
+ * @return Json<Room>
+ **/
 #[post("/", data = "<room>")]
 async fn create_room(room: Json<Room>) -> Result<Json<Room>, String> {
     let pool: &SqlitePool = db().await;
@@ -52,6 +57,27 @@ async fn create_room(room: Json<Room>) -> Result<Json<Room>, String> {
     Ok(Json(created_room))
 }
 
+/**
+ * List Rooms
+ * @return Json<Vec<Room>>
+ **/
+#[get("/")]
+async fn list_rooms() -> Result<Json<Vec<Room>>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let rooms = sqlx::query_as::<_, Room>(
+        r#"
+        SELECT id, location_id, name 
+        FROM rooms
+        "#,
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch rooms: {}", e))?;
+
+    Ok(Json(rooms))
+}
+
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_room]
+    routes![create_room, list_rooms]
 }

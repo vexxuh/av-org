@@ -108,17 +108,7 @@ const generateButtonStyle = (variant: string) => {
 };
 
 const generateLoaderColor = (variant: string) => {
-  return [
-    "black",
-    "white-light",
-    "transparent-white",
-    "red",
-    "dark-blue",
-    "blue-dark",
-    "grey",
-  ].includes(variant)
-    ? "var(--white)"
-    : "var(--black20)";
+  return "white";
 };
 
 export default Button;

@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 // Next
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 // Components
@@ -15,10 +15,39 @@ import {
   BreadcrumbSeparator,
 } from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
+import axios from "axios";
+import { Paths } from "@/utils/config/paths";
+import toast, { Toaster } from "react-hot-toast";
 
-const ItemDetailContainer: React.FC = () => {
+type ItemDetailContainerProps = {
+  data: any;
+};
+
+const ItemDetailContainer: React.FC<ItemDetailContainerProps> = ({ data }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { push } = useRouter();
+
+  const handleItemDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${data?.id}`
+      );
+
+      toast.success("Item deleted successfully!");
+
+      push("/");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete item!");
+    }
+    setIsDeleting(false);
+  };
+
   return (
     <section className="flex items-center justify-center">
+      <Toaster />
       <div className="max-w-[1900px] w-full mx-auto flex flex-col justify-between px-5 py-7 gap-10">
         {/* <Breadcrumb className="md:w-full ml-5 print:hidden m-auto">
           <BreadcrumbList className="text-gray-400 ">
@@ -37,18 +66,24 @@ const ItemDetailContainer: React.FC = () => {
         <article className="max-w-xs w-full">
           <div className="flex items-center gap-2">
             <Link href="/detailed-add">
-              <Button size="md" variant="grey">
+              <Button size="md" variant="grey" disabled={isDeleting}>
                 Add
               </Button>
             </Link>
 
             <Link href="/devices/edit">
-              <Button variant="black" size="md">
+              <Button variant="black" size="md" disabled={isDeleting}>
                 Edit
               </Button>
             </Link>
 
-            <Button onClick={() => redirect("/")} size="md" variant="red">
+            <Button
+              onClick={handleItemDelete}
+              size="md"
+              variant="red"
+              disabled={isDeleting}
+              isLoading={isDeleting}
+            >
               Delete
             </Button>
           </div>
@@ -57,47 +92,57 @@ const ItemDetailContainer: React.FC = () => {
         <article className="border-2 border-gray-300 rounded-md p-5 bg-white shadow-lg">
           <div className="flex flex-col gap-1 pb-5">
             <h4 className="text-lg font-medium">ID</h4>
-            <p>11132132-132312-312132</p>
+            <p>{data?.id}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
             <h4 className="text-lg font-medium">Manufacturer</h4>
-            <p>Apple</p>
+            <p>{data?.manufacturer}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
             <h4 className="text-lg font-medium">Model</h4>
-            <p>MacBook Pro</p>
+            <p>{data?.device_model}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
             <h4 className="text-lg font-medium">Serial Number</h4>
-            <p>123123123123</p>
+            <p>{data?.serial_number}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
-            <h4 className="text-lg font-medium">Type</h4>
-            <p>Laptop</p>
+            <h4 className="text-lg font-medium">Hostname</h4>
+            <p>{data?.hostname}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
-            <h4 className="text-lg font-medium">Status</h4>
-            <p>Active</p>
+            <h4 className="text-lg font-medium">Firmware</h4>
+            <p>{data?.firmware}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
-            <h4 className="text-lg font-medium">Location</h4>
-            <p>San Francisco</p>
+            <h4 className="text-lg font-medium">Password</h4>
+            <p>{data?.password}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
-            <h4 className="text-lg font-medium">Assigned To</h4>
-            <p>John Doe</p>
+            <h4 className="text-lg font-medium">Primary IP</h4>
+            <p>{data?.primary_ip}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
-            <h4 className="text-lg font-medium">Notes</h4>
-            <p>Some notes about this item</p>
+            <h4 className="text-lg font-medium">Primary MAC</h4>
+            <p>{data?.primary_mac}</p>
+          </div>
+
+          <div className="flex flex-col gap-1 pb-5">
+            <h4 className="text-lg font-medium">Secondary IP</h4>
+            <p>{data?.secondary_ip}</p>
+          </div>
+
+          <div className="flex flex-col gap-1 pb-5">
+            <h4 className="text-lg font-medium">Secondary MAC</h4>
+            <p>{data?.secondary_mac}</p>
           </div>
 
           <div className="flex flex-col gap-1 pb-5">
