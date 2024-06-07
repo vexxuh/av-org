@@ -27,7 +27,7 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
             id TEXT PRIMARY KEY NOT NULL,
             room_id TEXT NOT NULL,
             customer_id TEXT NOT NULL,
-            location TEXT NOT NULL,
+            location_id TEXT NOT NULL,
             manufacturer TEXT NOT NULL,
             device_model TEXT NOT NULL,
             serial_number TEXT NOT NULL,
@@ -40,6 +40,7 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
             secondary_ip TEXT NOT NULL,
             FOREIGN KEY (room_id) REFERENCES rooms(id),
             FOREIGN KEY (customer_id) REFERENCES customers(id)
+            FOREIGN KEY (location_id) REFERENCES locations(id)
         );
         ",
         )

@@ -1,5 +1,5 @@
 use crate::db::db;
-use crate::models::gear_item::GearItem;
+use crate::models::gear_item::{GearItem, GearItemReturn};
 use rocket::serde::json::Json;
 use rocket::{delete, get, post, put};
 use sqlx::SqlitePool;
@@ -99,7 +99,7 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
 async fn list_gear_items(
     skip: Option<u32>,
     limit: Option<u32>,
-) -> Result<Json<Vec<GearItem>>, String> {
+) -> Result<Json<Vec<GearItemReturn>>, String> {
     let pool: &SqlitePool = db().await;
 
     let skip = skip.unwrap_or(0);
@@ -107,14 +107,34 @@ async fn list_gear_items(
 
     let sql = format!(
         r#"
-        SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
-        FROM gear_items
-        LIMIT '{}' OFFSET '{}'
+        SELECT 
+            g.id, 
+            g.room_id, 
+            g.customer_id, 
+            g.location, 
+            g.manufacturer, 
+            g.device_model, 
+            g.serial_number, 
+            g.hostname, 
+            g.firmware, 
+            g.password, 
+            g.primary_mac, 
+            g.primary_ip, 
+            g.secondary_mac, 
+            g.secondary_ip,
+            r.name AS room_name,
+            l.name AS location_name,
+            c.name AS customer_name
+        FROM gear_items g
+        JOIN rooms r ON g.room_id = r.id
+        JOIN locations l ON g.location = l.id
+        JOIN customers c ON g.customer_id = c.id
+        LIMIT {} OFFSET {}
         "#,
-        limit as i64, skip as i64
+        limit, skip
     );
 
-    let gear_items = sqlx::query_as(&sql)
+    let gear_items = sqlx::query_as::<_, GearItemReturn>(&sql)
         .fetch_all(pool)
         .await
         .map_err(|e| format!("Failed to fetch gear items: {}", e))?;

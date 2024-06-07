@@ -13,6 +13,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import DashboardHeader from "./Header";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
@@ -38,6 +39,8 @@ const Dashboard: React.FC = () => {
   return (
     <section className="">
       <div className="max-w-[1900px] w-full mx-auto p-5">
+        {/* <DashboardHeader /> */}
+
         <article className="flex p-3 bg-white shadow-md rounded-2xl text-sm text-nowrap">
           <div className="w-1/4">
             <Table className="border-r-[2px]">
@@ -51,10 +54,10 @@ const Dashboard: React.FC = () => {
 
               <TableBody>
                 {data?.map((item: any) => (
-                  <TableRow key={item?.id} className="cursor-pointer">
-                    <TableCell>{item?.customer_id}</TableCell>
-                    <TableCell>{item?.location}</TableCell>
-                    <TableCell>{item?.room_id}</TableCell>
+                  <TableRow key={item?.id}>
+                    <TableCell>{item?.customer_name}</TableCell>
+                    <TableCell>{item?.location_name}</TableCell>
+                    <TableCell>{item?.room_name}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
