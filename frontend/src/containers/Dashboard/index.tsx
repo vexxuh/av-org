@@ -14,16 +14,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import DashboardHeader from "./Header";
+import { exportTable } from "@/utils/functions/exportTable";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
 
   const [data, setData] = useState<any>([]);
+  const [limit, setLimit] = useState(25);
 
   const handleFetchItems = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}`
       );
 
       setData(data);
@@ -34,14 +36,59 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     handleFetchItems();
-  }, []);
+  }, [limit]);
+
+  const handleExportTable = async (type: string) => {
+    const updatedDataWithHeader = [
+      [
+        "Customer",
+        "Location",
+        "Room",
+        "Manufacturer",
+        "Device Model",
+        "Serial Number",
+        "Primary MAC",
+        "Primary IP",
+        "Secondary MAC",
+        "Secondary IP",
+        "Hostname",
+        "Firmware",
+        "Password",
+      ],
+      ...data.map((item: any) => [
+        item?.customer_name,
+        item?.location_name,
+        item?.room_name,
+        item?.manufacturer,
+        item?.device_model,
+        item?.serial_number,
+        item?.primary_mac,
+        item?.primary_ip,
+        item?.secondary_mac,
+        item?.secondary_ip,
+        item?.hostname,
+        item?.firmware,
+        item?.password,
+      ]),
+    ];
+
+    exportTable(
+      updatedDataWithHeader,
+      `AV Gear-${new Date().toISOString().slice(0, 10)}`,
+      type
+    );
+  };
 
   return (
     <section className="">
       <div className="max-w-[1900px] w-full mx-auto p-5">
-        {/* <DashboardHeader /> */}
+        <DashboardHeader
+          limit={limit}
+          handleUpdateLimit={(limit: number) => setLimit(limit)}
+          handleExportTable={handleExportTable}
+        />
 
-        <article className="flex p-3 bg-white shadow-md rounded-2xl text-sm text-nowrap">
+        <article className="flex p-3 bg-white shadow-md rounded-lg text-sm text-nowrap">
           <div className="w-1/4">
             <Table className="border-r-[2px]">
               <TableHeader>
