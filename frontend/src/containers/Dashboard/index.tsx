@@ -15,14 +15,19 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import DashboardHeader from "./Header";
 import { exportTable } from "@/utils/functions/exportTable";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
 
   const [data, setData] = useState<any>([]);
   const [limit, setLimit] = useState(25);
+  const [loading, setLoading] = useState(true);
 
   const handleFetchItems = async () => {
+    setLoading(true);
+
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}`
@@ -32,6 +37,8 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error(error);
     }
+
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -79,6 +86,41 @@ const Dashboard: React.FC = () => {
     );
   };
 
+  const renderSkeleton = () => (
+    <TableRow>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+      <TableCell>
+        <Skeleton />
+      </TableCell>
+    </TableRow>
+  );
+
   return (
     <section className="">
       <div className="max-w-[1900px] w-full mx-auto p-5">
@@ -100,13 +142,27 @@ const Dashboard: React.FC = () => {
               </TableHeader>
 
               <TableBody>
-                {data?.map((item: any) => (
-                  <TableRow key={item?.id}>
-                    <TableCell>{item?.customer_name}</TableCell>
-                    <TableCell>{item?.location_name}</TableCell>
-                    <TableCell>{item?.room_name}</TableCell>
-                  </TableRow>
-                ))}
+                {loading
+                  ? Array.from({ length: limit }).map((_, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Skeleton />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  : data?.map((item: any) => (
+                      <TableRow key={item?.id}>
+                        <TableCell>{item?.customer_name}</TableCell>
+                        <TableCell>{item?.location_name}</TableCell>
+                        <TableCell>{item?.room_name}</TableCell>
+                      </TableRow>
+                    ))}
               </TableBody>
             </Table>
           </div>
@@ -127,24 +183,28 @@ const Dashboard: React.FC = () => {
             </TableHeader>
 
             <TableBody>
-              {data?.map((item: any) => (
-                <TableRow
-                  onClick={() => router.push(`/${item?.id}`)}
-                  className=" cursor-pointer"
-                  key={item?.id}
-                >
-                  <TableCell>{item?.manufacturer}</TableCell>
-                  <TableCell>{item?.device_model}</TableCell>
-                  <TableCell>{item?.serial_number}</TableCell>
-                  <TableCell>{item?.primary_mac}</TableCell>
-                  <TableCell>{item?.primary_ip}</TableCell>
-                  <TableCell>{item?.secondary_mac}</TableCell>
-                  <TableCell>{item?.secondary_ip}</TableCell>
-                  <TableCell>{item?.hostname}</TableCell>
-                  <TableCell>{item?.firmware}</TableCell>
-                  <TableCell>{item?.password}</TableCell>
-                </TableRow>
-              ))}
+              {loading
+                ? Array.from({ length: limit }).map((_, index) =>
+                    renderSkeleton()
+                  )
+                : data?.map((item: any) => (
+                    <TableRow
+                      onClick={() => router.push(`/${item?.id}`)}
+                      className="cursor-pointer"
+                      key={item?.id}
+                    >
+                      <TableCell>{item?.manufacturer}</TableCell>
+                      <TableCell>{item?.device_model}</TableCell>
+                      <TableCell>{item?.serial_number}</TableCell>
+                      <TableCell>{item?.primary_mac}</TableCell>
+                      <TableCell>{item?.primary_ip}</TableCell>
+                      <TableCell>{item?.secondary_mac}</TableCell>
+                      <TableCell>{item?.secondary_ip}</TableCell>
+                      <TableCell>{item?.hostname}</TableCell>
+                      <TableCell>{item?.firmware}</TableCell>
+                      <TableCell>{item?.password}</TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         </article>
