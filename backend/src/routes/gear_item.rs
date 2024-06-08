@@ -2,8 +2,18 @@ use crate::db::db;
 use crate::models::gear_item::{GearItem, GearItemReturn};
 use rocket::serde::json::Json;
 use rocket::{delete, get, post, put};
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GearItemResponse {
+    pub gear_items: Vec<GearItemReturn>,
+    pub total_items: u32,
+    pub total_pages: u32,
+    pub current_count: u32,
+    pub current_page: u32,
+}
 
 /**
  * Create Gear Item
@@ -93,45 +103,56 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
  * List Gear Items
  * @param skip: Option<u32>
  * @param limit: Option<u32>
- * @return Json<Vec<GearItem>>
+ * @return Json<GearItemResponse>
  **/
-#[get("/?<skip>&<limit>")]
+#[get("/?<page>&<limit>")]
 async fn list_gear_items(
-    skip: Option<u32>,
+    page: Option<u32>,
     limit: Option<u32>,
-) -> Result<Json<Vec<GearItemReturn>>, String> {
+) -> Result<Json<GearItemResponse>, String> {
     let pool: &SqlitePool = db().await;
 
-    let skip = skip.unwrap_or(0);
-    let limit = limit.unwrap_or(25);
+    let page = page.unwrap_or(1);
+    let per_page = limit.unwrap_or(25);
+    let offset = (page - 1) * per_page;
+
+    let total_items: (i64,) = sqlx::query_as(
+        r#"
+         SELECT COUNT(*)
+         FROM gear_items
+         "#,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch total number of gear items: {}", e))?;
 
     let sql = format!(
         r#"
-        SELECT 
-            g.id, 
-            g.room_id, 
-            g.customer_id, 
-            g.location, 
-            g.manufacturer, 
-            g.device_model, 
-            g.serial_number, 
-            g.hostname, 
-            g.firmware, 
-            g.password, 
-            g.primary_mac, 
-            g.primary_ip, 
-            g.secondary_mac, 
-            g.secondary_ip,
-            r.name AS room_name,
-            l.name AS location_name,
-            c.name AS customer_name
-        FROM gear_items g
-        JOIN rooms r ON g.room_id = r.id
-        JOIN locations l ON g.location = l.id
-        JOIN customers c ON g.customer_id = c.id
-        LIMIT {} OFFSET {}
-        "#,
-        limit, skip
+         SELECT 
+             g.id, 
+             g.room_id, 
+             g.customer_id, 
+             g.location, 
+             g.manufacturer, 
+             g.device_model, 
+             g.serial_number, 
+             g.hostname, 
+             g.firmware, 
+             g.password, 
+             g.primary_mac, 
+             g.primary_ip, 
+             g.secondary_mac, 
+             g.secondary_ip,
+             r.name AS room_name,
+             l.name AS location_name,
+             c.name AS customer_name
+         FROM gear_items g
+         JOIN rooms r ON g.room_id = r.id
+         JOIN locations l ON g.location = l.id
+         JOIN customers c ON g.customer_id = c.id
+         LIMIT '{}' OFFSET '{}'
+         "#,
+        per_page, offset
     );
 
     let gear_items = sqlx::query_as::<_, GearItemReturn>(&sql)
@@ -139,33 +160,16 @@ async fn list_gear_items(
         .await
         .map_err(|e| format!("Failed to fetch gear items: {}", e))?;
 
-    Ok(Json(gear_items))
-}
+    let total_pages = (total_items.0 as f64 / per_page as f64).ceil() as u32;
+    let current_count = gear_items.len() as u32;
 
-/**
- * Get Gear Item by ID
- * @param id: String
- * @return Json<GearItem>
- **/
-#[get("/<id>")]
-async fn get_gear_item_by_id(id: String) -> Result<Json<GearItem>, String> {
-    let pool: &SqlitePool = db().await;
-
-    let sql = format!(
-        r#"
-        SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
-        FROM gear_items 
-        WHERE id = '{}'
-        "#,
-        id
-    );
-
-    let gear_item = sqlx::query_as::<_, GearItem>(&sql)
-        .fetch_one(pool)
-        .await
-        .map_err(|e| format!("Failed to fetch gear item: {}", e))?;
-
-    Ok(Json(gear_item))
+    Ok(Json(GearItemResponse {
+        gear_items,
+        total_items: total_items.0 as u32,
+        total_pages,
+        current_page: page,
+        current_count,
+    }))
 }
 
 /**
@@ -218,6 +222,32 @@ async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>
         .map_err(|e| format!("Failed to fetch created gear item: {}", e))?;
 
     Ok(Json(created_gear_item))
+}
+
+/**
+ * Get Gear Item by ID
+ * @param id: String
+ * @return Json<GearItem>
+ **/
+#[get("/<id>")]
+async fn get_gear_item_by_id(id: String) -> Result<Json<GearItem>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let sql = format!(
+        r#"
+         SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
+         FROM gear_items 
+         WHERE id = '{}'
+         "#,
+        id
+    );
+
+    let gear_item = sqlx::query_as::<_, GearItem>(&sql)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch gear item: {}", e))?;
+
+    Ok(Json(gear_item))
 }
 
 /**

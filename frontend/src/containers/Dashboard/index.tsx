@@ -17,6 +17,7 @@ import DashboardHeader from "./Header";
 import { exportTable } from "@/utils/functions/exportTable";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import TablePagination from "./Pagination";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
@@ -24,16 +25,29 @@ const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>([]);
   const [limit, setLimit] = useState(25);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageString, setPageString] = useState("0-0 of 0" as string);
 
   const handleFetchItems = async () => {
     setLoading(true);
 
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}&page=${currentPage}`
       );
 
-      setData(data);
+      setData(data?.gear_items);
+      setTotalPages(data?.total_pages);
+      setCurrentPage(data?.current_page);
+
+      setPageString(
+        `${(currentPage - 1) * limit + 1}-${
+          currentPage * limit > data?.total_items
+            ? data?.total_items
+            : currentPage * limit
+        } of ${data?.total_items}`
+      );
     } catch (error) {
       console.error(error);
     }
@@ -43,7 +57,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     handleFetchItems();
-  }, [limit]);
+  }, [limit, currentPage]);
 
   const handleExportTable = async (type: string) => {
     const updatedDataWithHeader = [
@@ -86,6 +100,12 @@ const Dashboard: React.FC = () => {
     );
   };
 
+  const handleChangePagee = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   const renderSkeleton = () => (
     <TableRow>
       <TableCell>
@@ -122,7 +142,7 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <section className="">
+    <section className="w-screen">
       <div className="max-w-[1900px] w-full mx-auto p-5">
         <DashboardHeader
           limit={limit}
@@ -208,6 +228,12 @@ const Dashboard: React.FC = () => {
             </TableBody>
           </Table>
         </article>
+        <TablePagination
+          currentPage={currentPage}
+          changePage={handleChangePagee}
+          totalPages={totalPages}
+          pageString={pageString}
+        />
       </div>
     </section>
   );

@@ -38,9 +38,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <div className="flex items-center w-full">
         <div className=" md:w-auto">
           <Select
-            defaultValue={limit.toString()}
             value={limit.toString()}
             onValueChange={(value) => handleUpdateLimit(parseInt(value))}
+            defaultValue="25"
           >
             <SelectTrigger
               className="bg-[#415778] w-32 h-12 shadow-md rounded-md text-white"

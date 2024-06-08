@@ -85,11 +85,11 @@ const Button: React.FC<ButtonProps> = ({
 const generateButtonStyle = (variant: string) => {
   switch (variant) {
     case "green":
-      return "bg-green-dark text-blue-mag font-medium hover:bg-green text-white";
+      return "bg-black text-blue-mag font-medium hover:bg-green text-white";
     case "dark-blue":
       return "bg-blue text-white font-medium hover:bg-blue-dark text-white";
     case "transparent":
-      return "border border-green-dark bg-transparent text-green-dark font-medium hover:bg-green-dark text-white";
+      return "border border-black bg-transparent text-black font-medium hover:bg-black text-white";
     case "black":
       return "border border-black bg-black text-white font-medium hover:bg-gray-900 text-white";
     case "blue-dark":
