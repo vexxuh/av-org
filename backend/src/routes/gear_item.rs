@@ -227,22 +227,42 @@ async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>
 /**
  * Get Gear Item by ID
  * @param id: String
- * @return Json<GearItem>
+ * @return Json<GearItemReturn>
  **/
 #[get("/<id>")]
-async fn get_gear_item_by_id(id: String) -> Result<Json<GearItem>, String> {
+async fn get_gear_item_by_id(id: String) -> Result<Json<GearItemReturn>, String> {
     let pool: &SqlitePool = db().await;
 
     let sql = format!(
         r#"
-         SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
-         FROM gear_items 
-         WHERE id = '{}'
-         "#,
+          SELECT 
+              g.id, 
+              g.room_id, 
+              g.customer_id, 
+              g.location, 
+              g.manufacturer, 
+              g.device_model, 
+              g.serial_number, 
+              g.hostname, 
+              g.firmware, 
+              g.password, 
+              g.primary_mac, 
+              g.primary_ip, 
+              g.secondary_mac, 
+              g.secondary_ip,
+              r.name AS room_name,
+              l.name AS location_name,
+              c.name AS customer_name
+          FROM gear_items g
+          JOIN rooms r ON g.room_id = r.id
+          JOIN locations l ON g.location = l.id
+          JOIN customers c ON g.customer_id = c.id
+          WHERE g.id = '{}'
+          "#,
         id
     );
 
-    let gear_item = sqlx::query_as::<_, GearItem>(&sql)
+    let gear_item = sqlx::query_as::<_, GearItemReturn>(&sql)
         .fetch_one(pool)
         .await
         .map_err(|e| format!("Failed to fetch gear item: {}", e))?;
