@@ -6,9 +6,20 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// Axios
+import axios from "axios";
+
 // React Hook Form
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import {
+  Controller,
+  FormProvider,
+  SubmitHandler,
+  useForm,
+} from "react-hook-form";
+
+// React Hot Toast
+import toast, { Toaster } from "react-hot-toast";
 
 // Components
 import {
@@ -25,15 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/FormElements/Select";
-
-// Schema
-import detailedAddSchema from "./schema";
-import Input from "@/components/FormElements/Input/UncontrolledInput";
-import Button from "@/components/common/Button";
-import { axiosInstance } from "@/utils/config/axios";
-import { Paths } from "@/utils/config/paths";
-import toast, { Toaster } from "react-hot-toast";
-import { LOCATION, ROOM } from "@/utils/types/common";
 import {
   FormControl,
   FormField,
@@ -41,7 +43,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/FormElements/Form";
-import axios from "axios";
+import Input from "@/components/FormElements/Input/UncontrolledInput";
+import Button from "@/components/common/Button";
+
+// Schema
+import detailedAddSchema from "./schema";
+
+// Utils
+import { Paths } from "@/utils/config/paths";
+import { LOCATION, ROOM } from "@/utils/types/common";
 
 type FormValues = {
   manufacturer: string;
@@ -73,7 +83,7 @@ const DetailedAddContainer: React.FC = () => {
     handleSubmit,
   } = form;
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
     console.log("values", values);
     try {
       const response = await axios.post(

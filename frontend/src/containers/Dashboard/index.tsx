@@ -12,6 +12,9 @@ import axios from "axios";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
+// React Hot Toast
+import { Toaster } from "react-hot-toast";
+
 // Components
 import {
   Table,
@@ -152,6 +155,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <section className="w-screen">
+      <Toaster />
+
       <div className="max-w-[1900px] w-full mx-auto p-5">
         <DashboardHeader
           limit={limit}
