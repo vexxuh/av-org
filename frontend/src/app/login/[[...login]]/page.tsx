@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 // Next
 import Link from "next/link";
@@ -14,9 +14,23 @@ import { FaGears } from "react-icons/fa6";
 
 const Login: React.FC = () => {
   const { isLoaded } = useSignIn();
+  const [clerkLoaded, setClerkLoaded] = useState(false);
 
   useEffect(() => {
     document.title = "Login | AV Gear";
+
+    const checkClerkLoaded = () => {
+      const clerkRootBox = document.querySelector(".cl-rootBox");
+      if (clerkRootBox) {
+        setClerkLoaded(true);
+      } else {
+        setClerkLoaded(false);
+      }
+    };
+
+    const intervalId = setInterval(checkClerkLoaded, 50);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   if (!isLoaded) {
@@ -62,6 +76,10 @@ const Login: React.FC = () => {
                 Login into your account
               </h6>
             </div>
+
+            {!clerkLoaded && (
+              <p className="text-xl text-gray-500">Loading...</p>
+            )}
 
             <SignIn
               appearance={{

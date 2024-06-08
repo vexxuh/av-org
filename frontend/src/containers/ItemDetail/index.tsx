@@ -6,6 +6,12 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 
+// axios
+import axios from "axios";
+
+// React Hot Toast
+import toast, { Toaster } from "react-hot-toast";
+
 // React Loading Skeleton
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -19,9 +25,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
-import axios from "axios";
+
+// Utils
 import { Paths } from "@/utils/config/paths";
-import toast, { Toaster } from "react-hot-toast";
 
 const ItemDetailContainer: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,7 +92,7 @@ const ItemDetailContainer: React.FC = () => {
               </Button>
             </Link>
 
-            <Link href="/devices/edit">
+            <Link href={`/${data?.id}/edit`}>
               <Button variant="black" size="md" disabled={isDeleting}>
                 Edit
               </Button>

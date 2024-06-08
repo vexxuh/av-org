@@ -316,7 +316,7 @@ const DetailedAddContainer: React.FC = () => {
               <Button
                 type="submit"
                 size="md"
-                variant="grey-transparent"
+                variant="grey"
                 isLoading={isSubmitting}
                 disabled={isSubmitting}
               >

@@ -4,9 +4,10 @@ import React, { useState } from "react";
 
 // Next
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Clerk
-import { SignOutButton, useAuth } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 
 // React Icons
 import { FaGears } from "react-icons/fa6";
@@ -16,6 +17,8 @@ import { IoIosArrowDown } from "react-icons/io";
 import { LuPlus } from "react-icons/lu";
 import { SlEnergy } from "react-icons/sl";
 import { RiSoundModuleFill } from "react-icons/ri";
+
+import cookies from "js-cookie";
 
 // Components
 import Input from "@/components/FormElements/Input/ControlledInput";
@@ -49,7 +52,15 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
     setSearch(e.target.value);
   };
 
-  const { sessionId } = useAuth();
+  const { signOut } = useClerk();
+  const { push } = useRouter();
+
+  const handleSignOut = () => {
+    cookies.set("__client_uat", "0");
+    cookies.remove("__session");
+    signOut({ redirectUrl: "/login" });
+    push("/login");
+  };
 
   return (
     <section className="flex items-center justify-center border-b-[1px] border-gray-300">
@@ -154,18 +165,15 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="bg-white shadow-lg rounded-lg mt-1 w-32 flex gap-2 flex-col overflow-hidden">
-              <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
+              {/* <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
                 <User className=" h-4 w-4" />
 
                 <span>Profile</span>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none flex items-center gap-2">
                 <LogOut className=" h-4 w-4" />
 
-                <SignOutButton
-                  signOutOptions={{ sessionId: sessionId || "undefined" }}
-                  redirectUrl="/login"
-                />
+                <button onClick={handleSignOut}>Sign Out</button>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

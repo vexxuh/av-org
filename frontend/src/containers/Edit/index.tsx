@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 // Next
-import { redirect, useRouter } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 
 // React Hook Form
 import { yupResolver } from "@hookform/resolvers/yup";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 
 // Components
 import {
@@ -30,15 +30,25 @@ import {
 import editItemSchema from "./schema";
 import Input from "@/components/FormElements/Input/UncontrolledInput";
 import Button from "@/components/common/Button";
+import axios from "axios";
+import { Paths } from "@/utils/config/paths";
+import {
+  FormControl,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/FormElements/Form";
+import { LOCATION, ROOM } from "@/utils/types/common";
+import toast, { Toaster } from "react-hot-toast";
 
 type FormValues = {
   manufacturer: string;
-  deviceModel: string;
-  serialNumber: string;
-  primaryMAC: string;
-  primaryIP: string;
-  secondaryMAC: string;
-  secondaryIP: string;
+  device_model: string;
+  serial_number: string;
+  primary_mac: string;
+  primary_ip: string;
+  secondary_mac: string;
+  secondary_ip: string;
   hostname: string;
   firmware: string;
   password: string;
@@ -47,42 +57,125 @@ type FormValues = {
 };
 
 const EditContainer: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>({
+    manufacturer: "",
+    device_model: "",
+    serial_number: "",
+    primary_mac: "",
+    primary_ip: "",
+    secondary_mac: "",
+    secondary_ip: "",
+    hostname: "",
+    firmware: "",
+    password: "",
+    location: "",
+    room_id: "",
+  });
+  const [locations, setLocations] = useState<LOCATION[] | []>([]);
+  const [rooms, setRooms] = useState<ROOM[] | []>([]);
+
   const { push } = useRouter();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: yupResolver(editItemSchema),
   });
 
   const {
-    formState: { errors },
+    formState: { errors, isSubmitting },
     handleSubmit,
+    setValue,
   } = form;
 
   const onSubmit = async (values: FormValues) => {
-    console.log("values", values);
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${data.id}`,
+        {
+          ...values,
+          customer_id: "26ab8229-b838-4c6b-8c43-aeff57d3c296",
+          room_id: values.room,
+          location: values.location,
+        }
+      );
 
-    push("/devices");
+      toast.success("Gear updated successfully!");
+
+      push(`/${response.data.id}`);
+    } catch (err) {
+      console.error("Error: ", err);
+      toast.error("Error updating gear!");
+    }
+  };
+  const handleFetchLocations = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.LOCATION}`
+      );
+
+      setLocations(response.data);
+    } catch (err) {
+      console.error("Error: ", err);
+    }
+  };
+
+  const handleFetchRooms = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}`
+      );
+
+      setRooms(response.data);
+    } catch (err) {
+      console.error("Error: ", err);
+    }
+  };
+
+  const handleFetchData = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${
+          pathname.split("/")[1]
+        }`
+      );
+
+      if (!data?.id) {
+        return push("/");
+      }
+
+      setData(data);
+    } catch (error) {
+      console.error(error);
+      push("/");
+    }
   };
 
   useEffect(() => {
-    form.reset({
-      manufacturer: "Apple",
-      deviceModel: "iPhone 12",
-      serialNumber: "123456789",
-      primaryMAC: "12:34:56:78:90",
-      primaryIP: "",
-      secondaryMAC: "12:34:56:78:90",
-      secondaryIP: "",
-      hostname: "iPhone",
-      firmware: "iOS 14",
-      password: "password",
-      location: "",
-      room: "",
-    });
+    handleFetchData();
+    handleFetchLocations();
+    handleFetchRooms();
   }, []);
+
+  useEffect(() => {
+    setValue("manufacturer", data?.manufacturer);
+    setValue("device_model", data?.device_model);
+    setValue("serial_number", data?.serial_number);
+    setValue("primary_mac", data?.primary_mac);
+    setValue("primary_ip", data?.primary_ip);
+    setValue("secondary_mac", data?.secondary_mac);
+    setValue("secondary_ip", data?.secondary_ip);
+    setValue("hostname", data?.hostname);
+    setValue("firmware", data?.firmware);
+    setValue("password", data?.password);
+    setValue("location", data?.location);
+    setValue("room", data?.room_id);
+  }, [data]);
 
   return (
     <section className="flex items-center justify-center">
+      <Toaster />
+
       <div className="max-w-[1900px] w-full mx-auto flex items-center flex-col justify-between px-5 py-7 gap-10">
         {/* <Breadcrumb className="md:w-full ml-5 print:hidden m-auto">
           <BreadcrumbList className="text-gray-400 ">
@@ -113,107 +206,104 @@ const EditContainer: React.FC = () => {
                   placeholder="Manufacturer"
                   error={errors?.manufacturer?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
-                  id="deviceModel"
+                  id="device_model"
                   label="Device Model"
                   placeholder="Device Model"
-                  error={errors?.deviceModel?.message}
+                  error={errors?.device_model?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
-                <div>
-                  <label htmlFor="location">Location</label>
-                  <Select>
-                    <SelectTrigger
-                      className="bg-white h-12 shadow-md rounded-md"
-                      id="location"
-                    >
-                      <SelectValue placeholder="Select a location" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem
-                        value="NYC"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        New York
-                      </SelectItem>
-                      <SelectItem
-                        value="California"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        California
-                      </SelectItem>
-                      <SelectItem
-                        value="WC"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        Washington DC
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {errors?.location?.message && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors?.location?.message}
-                    </p>
+                <Controller
+                  name="location"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          disabled={isSubmitting}
+                          defaultValue={data?.location}
+                        >
+                          <SelectTrigger
+                            className="bg-white h-12 shadow-md rounded-md"
+                            id="location"
+                          >
+                            <SelectValue
+                              placeholder={
+                                data?.location_name || "Select a location"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white">
+                            {locations.length > 0 &&
+                              locations?.map((location) => (
+                                <SelectItem
+                                  value={location?.id}
+                                  className="hover:bg-gray-200 cursor-pointer"
+                                  key={location?.id}
+                                >
+                                  {location?.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage>{errors.location?.message}</FormMessage>
+                    </FormItem>
                   )}
-                </div>
+                />
 
-                <div>
-                  <label htmlFor="room">Room</label>
-                  <Select>
-                    <SelectTrigger
-                      className="bg-white h-12 shadow-md rounded-md"
-                      id="room"
-                    >
-                      <SelectValue placeholder="Select a room" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem
-                        value="3W1"
-                        defaultValue="3w1"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        3W1
-                      </SelectItem>
-                      <SelectItem
-                        value="3W2"
-                        defaultValue="3W2"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        3W2
-                      </SelectItem>
-                      <SelectItem
-                        value="W14"
-                        defaultValue="3w1"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        W14
-                      </SelectItem>
-                      <SelectItem
-                        value="W141"
-                        defaultValue="3w1"
-                        className="hover:bg-gray-200 cursor-pointer"
-                      >
-                        W141
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors?.room?.message && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors?.room?.message}
-                    </p>
+                <Controller
+                  name="room"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Room</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          disabled={isSubmitting}
+                          defaultValue={data?.room_id}
+                        >
+                          <SelectTrigger
+                            className="bg-white h-12 shadow-md rounded-md"
+                            id="room"
+                          >
+                            <SelectValue
+                              placeholder={data?.room_name || "Select a room"}
+                            />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white">
+                            {rooms?.map((room) => (
+                              <SelectItem
+                                value={room?.id}
+                                className="hover:bg-gray-200 cursor-pointer"
+                                key={room?.id}
+                              >
+                                {room?.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage>{errors.room?.message}</FormMessage>
+                    </FormItem>
                   )}
-                </div>
+                />
 
                 <Input
-                  id="serialNumber"
+                  id="serial_number"
                   label="Serial Number"
                   placeholder="Serial Number"
-                  error={errors?.serialNumber?.message}
+                  error={errors?.serial_number?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
@@ -222,6 +312,7 @@ const EditContainer: React.FC = () => {
                   placeholder="Hostname"
                   error={errors?.hostname?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
@@ -230,6 +321,7 @@ const EditContainer: React.FC = () => {
                   placeholder="Firmware"
                   error={errors?.firmware?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
@@ -238,42 +330,53 @@ const EditContainer: React.FC = () => {
                   placeholder="Password"
                   error={errors?.password?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
-                  id="primaryMAC"
+                  id="primary_mac"
                   label="Primary MAC"
                   placeholder="Primary MAC"
-                  error={errors?.primaryMAC?.message}
+                  error={errors?.primary_mac?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
-                  id="primaryIP"
+                  id="primary_ip"
                   label="Primary IP"
                   placeholder="Primary IP"
-                  error={errors?.primaryIP?.message}
+                  error={errors?.primary_ip?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
-                  id="secondaryMAC"
+                  id="secondary_mac"
                   label="Secondary MAC"
                   placeholder="Secondary MAC"
-                  error={errors?.secondaryMAC?.message}
+                  error={errors?.secondary_mac?.message}
                   required
+                  disabled={isSubmitting}
                 />
 
                 <Input
-                  id="secondaryIP"
+                  id="secondary_ip"
                   label="Secondary IP"
                   placeholder="Secondary IP"
-                  error={errors?.secondaryIP?.message}
+                  error={errors?.secondary_ip?.message}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
-              <Button type="submit" size="md" variant="grey-transparent">
+              <Button
+                type="submit"
+                size="md"
+                variant="grey"
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+              >
                 Edit Gear
               </Button>
             </FormProvider>

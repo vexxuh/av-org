@@ -14,7 +14,7 @@ export default clerkMiddleware((auth, req) => {
     (req.url.includes("/login") || req.url.includes("/signup")) &&
     auth().userId
   )
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
 });
 
 export const config = {

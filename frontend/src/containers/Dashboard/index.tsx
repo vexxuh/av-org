@@ -1,5 +1,18 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+
+// Next
+import { useRouter } from "next/navigation";
+
+// Axios
+import axios from "axios";
+
+// Skeleton
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+
+// Components
 import {
   Table,
   TableBody,
@@ -8,16 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/common/Tables";
-import { Paths } from "@/utils/config/paths";
-import axios from "axios";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
 import DashboardHeader from "./Header";
-import { exportTable } from "@/utils/functions/exportTable";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import TablePagination from "./Pagination";
+
+// Utils
+import { Paths } from "@/utils/config/paths";
+import { exportTable } from "@/utils/functions/exportTable";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
@@ -162,27 +171,35 @@ const Dashboard: React.FC = () => {
               </TableHeader>
 
               <TableBody>
-                {loading
-                  ? Array.from({ length: limit }).map((_, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <Skeleton />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : data?.map((item: any) => (
-                      <TableRow key={item?.id}>
-                        <TableCell>{item?.customer_name}</TableCell>
-                        <TableCell>{item?.location_name}</TableCell>
-                        <TableCell>{item?.room_name}</TableCell>
-                      </TableRow>
-                    ))}
+                {loading ? (
+                  Array.from({ length: limit }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : data.length > 0 ? (
+                  data?.map((item: any) => (
+                    <TableRow key={item?.id}>
+                      <TableCell>{item?.customer_name}</TableCell>
+                      <TableCell>{item?.location_name}</TableCell>
+                      <TableCell>{item?.room_name}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">
+                      No data found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -203,28 +220,36 @@ const Dashboard: React.FC = () => {
             </TableHeader>
 
             <TableBody>
-              {loading
-                ? Array.from({ length: limit }).map((_, index) =>
-                    renderSkeleton()
-                  )
-                : data?.map((item: any) => (
-                    <TableRow
-                      onClick={() => router.push(`/${item?.id}`)}
-                      className="cursor-pointer"
-                      key={item?.id}
-                    >
-                      <TableCell>{item?.manufacturer}</TableCell>
-                      <TableCell>{item?.device_model}</TableCell>
-                      <TableCell>{item?.serial_number}</TableCell>
-                      <TableCell>{item?.primary_mac}</TableCell>
-                      <TableCell>{item?.primary_ip}</TableCell>
-                      <TableCell>{item?.secondary_mac}</TableCell>
-                      <TableCell>{item?.secondary_ip}</TableCell>
-                      <TableCell>{item?.hostname}</TableCell>
-                      <TableCell>{item?.firmware}</TableCell>
-                      <TableCell>{item?.password}</TableCell>
-                    </TableRow>
-                  ))}
+              {loading ? (
+                Array.from({ length: limit }).map((_, index) =>
+                  renderSkeleton()
+                )
+              ) : data.length > 0 ? (
+                data?.map((item: any) => (
+                  <TableRow
+                    onClick={() => router.push(`/${item?.id}`)}
+                    className="cursor-pointer"
+                    key={item?.id}
+                  >
+                    <TableCell>{item?.manufacturer}</TableCell>
+                    <TableCell>{item?.device_model}</TableCell>
+                    <TableCell>{item?.serial_number}</TableCell>
+                    <TableCell>{item?.primary_mac}</TableCell>
+                    <TableCell>{item?.primary_ip}</TableCell>
+                    <TableCell>{item?.secondary_mac}</TableCell>
+                    <TableCell>{item?.secondary_ip}</TableCell>
+                    <TableCell>{item?.hostname}</TableCell>
+                    <TableCell>{item?.firmware}</TableCell>
+                    <TableCell>{item?.password}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center">
+                    No data found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </article>

@@ -28,6 +28,7 @@ interface ButtonProps {
   disabled?: boolean;
   type?: "button" | "submit";
   className?: string;
+  title?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -41,6 +42,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   type = "button",
   className = "",
+  title = "",
 }) => {
   return (
     <button
@@ -50,6 +52,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       type={type}
+      title={title}
     >
       {iconStart && (
         <span className="w-4 h-4 flex items-center justify-center">
