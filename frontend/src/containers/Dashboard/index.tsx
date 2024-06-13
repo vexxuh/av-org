@@ -41,12 +41,12 @@ const Dashboard: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [pageString, setPageString] = useState("0-0 of 0" as string);
 
-  const handleFetchItems = async () => {
+  const handleFetchItems = async (search: string = "") => {
     setLoading(true);
 
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}&page=${currentPage}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}&page=${currentPage}&search=${search}`
       );
 
       setData(data?.gear_items);
@@ -162,6 +162,7 @@ const Dashboard: React.FC = () => {
           limit={limit}
           handleUpdateLimit={(limit: number) => setLimit(limit)}
           handleExportTable={handleExportTable}
+          handleFetchItems={handleFetchItems}
         />
 
         <article className="flex p-3 bg-white shadow-md rounded-lg text-sm text-nowrap">

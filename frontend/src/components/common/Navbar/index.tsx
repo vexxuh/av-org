@@ -45,12 +45,7 @@ type NavbarProps = {
 };
 
 const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
-  const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
 
   const { signOut } = useClerk();
   const { push } = useRouter();
@@ -83,18 +78,6 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
           {listingOptions && (
             <div className="flex items-center gap-3">
               <hr className="w-10 h-[0.5px] border-none bg-gray-500 rotate-90" />
-              <div className="max-w-96 w-full">
-                <Input
-                  id="search"
-                  onChange={handleChange}
-                  placeholder="Search"
-                  icon={<FaSearch />}
-                  mb={0}
-                  value={search}
-                  className="h-[40px] outline-none"
-                  rounded="rounded-full"
-                />
-              </div>
 
               <div className="rounded-full overflow-hidden w-20">
                 <Button variant="grey" className="rounded-full">

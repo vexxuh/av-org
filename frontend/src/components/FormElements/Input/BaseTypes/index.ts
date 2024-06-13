@@ -17,4 +17,5 @@ export type InputBaseProps = React.HTMLProps<HTMLInputElement> & {
   button?: React.ReactNode;
   rounded?: string;
   border?: string;
+  parentStyles?: string;
 };

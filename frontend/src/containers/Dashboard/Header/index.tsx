@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 
 // React Icons
 import { BsFiletypeCsv, BsFiletypeXlsx } from "react-icons/bs";
-import { CiExport } from "react-icons/ci";
+import { CiExport, CiSearch } from "react-icons/ci";
 
 // Components
 import Button from "@/components/common/Button";
@@ -21,18 +21,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/FormElements/Select";
+import Input from "@/components/FormElements/Input/ControlledInput";
+import { FaSearch } from "react-icons/fa";
 
 type DashboardHeaderProps = {
   limit: number;
   handleUpdateLimit: (limit: number) => void;
   handleExportTable: (type: string) => void;
+  handleFetchItems: (search: string) => void;
 };
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   limit,
   handleUpdateLimit,
   handleExportTable,
+  handleFetchItems,
 }) => {
+  const [search, setSearch] = useState("");
   return (
     <div className="p-3 w-full justify-between md:flex bg-white mb-4 rounded-lg">
       <div className="flex items-center w-full">
@@ -62,7 +67,33 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </Select>
         </div>
       </div>
-      <div className="flex w-full md:w-auto">
+      <div className="flex w-full md:w-auto h-[42px] gap-3">
+        <div className="max-w-96 w-full">
+          <Input
+            id="search"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Search"
+            icon={<FaSearch />}
+            mb={0}
+            value={search}
+            className="h-[40px] outline-none bg-slate-300 text-[#415778] placeholder:text-[#415778]"
+            rounded="rounded-md"
+            parentStyles="bg-slate-300 text-[#415778] h-full"
+          />
+        </div>
+
+        <Button
+          variant="grey"
+          size="sm"
+          className="rounded-md border text-popover-foreground shadow-md  flex gap-2 "
+          iconStart={<CiSearch fontSize={16} />}
+          onClick={() => handleFetchItems(search)}
+        >
+          Search
+        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <span>

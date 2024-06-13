@@ -34,21 +34,22 @@ const Input: React.FC<InputProps> = ({
   icon,
   rounded = "rounded-full",
   border = "",
+  parentStyles = "",
   ...props
 }) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   return (
-    <div className={`mb-${mb}`}>
+    <div
+      className={`mb-${mb} bg-white text-gray-500 ${parentStyles} ${rounded} overflow-hidden`}
+    >
       {label && <label htmlFor={id}>{label}</label>}
       <div
-        className={`${rounded} shadow-md flex items-center w-full overflow-hidden bg-white ${
+        className={`shadow-md flex items-center w-full overflow-hidden ${
           error ? "border-error" : ""
         } ${border}`}
       >
-        {icon && (
-          <span className="px-3 text-gray-500 flex items-center">{icon}</span>
-        )}
+        {icon && <span className="px-3 flex items-center">{icon}</span>}
         {onChange && (
           <input
             type={type === "password" && passwordVisible ? "text" : type}

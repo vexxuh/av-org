@@ -101,64 +101,170 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
 
 /**
  * List Gear Items
- * @param skip: Option<u32>
+ * @param page: Option<u32>
  * @param limit: Option<u32>
+ * @param search: Option<String>
  * @return Json<GearItemResponse>
  **/
-#[get("/?<page>&<limit>")]
+#[get("/?<page>&<limit>&<search>")]
 async fn list_gear_items(
     page: Option<u32>,
     limit: Option<u32>,
+    search: Option<String>,
 ) -> Result<Json<GearItemResponse>, String> {
     let pool: &SqlitePool = db().await;
 
     let page = page.unwrap_or(1);
     let per_page = limit.unwrap_or(25);
     let offset = (page - 1) * per_page;
+    let search_query = search.unwrap_or_default();
 
-    let total_items: (i64,) = sqlx::query_as(
+    let search_pattern = format!("%{}%", search_query);
+
+    let total_items_query = if search_query.is_empty() {
+        "SELECT COUNT(*) FROM gear_items".to_string()
+    } else {
         r#"
          SELECT COUNT(*)
-         FROM gear_items
-         "#,
-    )
-    .fetch_one(pool)
-    .await
-    .map_err(|e| format!("Failed to fetch total number of gear items: {}", e))?;
-
-    let sql = format!(
-        r#"
-         SELECT 
-             g.id, 
-             g.room_id, 
-             g.customer_id, 
-             g.location, 
-             g.manufacturer, 
-             g.device_model, 
-             g.serial_number, 
-             g.hostname, 
-             g.firmware, 
-             g.password, 
-             g.primary_mac, 
-             g.primary_ip, 
-             g.secondary_mac, 
-             g.secondary_ip,
-             r.name AS room_name,
-             l.name AS location_name,
-             c.name AS customer_name
          FROM gear_items g
          JOIN rooms r ON g.room_id = r.id
          JOIN locations l ON g.location = l.id
          JOIN customers c ON g.customer_id = c.id
-         LIMIT '{}' OFFSET '{}'
-         "#,
-        per_page, offset
-    );
+         WHERE g.manufacturer LIKE ?
+         OR g.device_model LIKE ?
+         OR g.serial_number LIKE ?
+         OR g.hostname LIKE ?
+         OR g.firmware LIKE ?
+         OR g.primary_mac LIKE ?
+         OR g.primary_ip LIKE ?
+         OR g.secondary_mac LIKE ?
+         OR g.secondary_ip LIKE ?
+         OR r.name LIKE ?
+         OR l.name LIKE ?
+         OR c.name LIKE ?
+         "#
+        .to_string()
+    };
 
-    let gear_items = sqlx::query_as::<_, GearItemReturn>(&sql)
-        .fetch_all(pool)
-        .await
-        .map_err(|e| format!("Failed to fetch gear items: {}", e))?;
+    let total_items: (i64,) = if search_query.is_empty() {
+        sqlx::query_as(&total_items_query)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| format!("Failed to fetch total number of gear items: {}", e))?
+    } else {
+        sqlx::query_as(&total_items_query)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| format!("Failed to fetch total number of gear items: {}", e))?
+    };
+
+    let sql = if search_query.is_empty() {
+        format!(
+            r#"
+             SELECT 
+                 g.id, 
+                 g.room_id, 
+                 g.customer_id, 
+                 g.location, 
+                 g.manufacturer, 
+                 g.device_model, 
+                 g.serial_number, 
+                 g.hostname, 
+                 g.firmware, 
+                 g.password, 
+                 g.primary_mac, 
+                 g.primary_ip, 
+                 g.secondary_mac, 
+                 g.secondary_ip,
+                 r.name AS room_name,
+                 l.name AS location_name,
+                 c.name AS customer_name
+             FROM gear_items g
+             JOIN rooms r ON g.room_id = r.id
+             JOIN locations l ON g.location = l.id
+             JOIN customers c ON g.customer_id = c.id
+             LIMIT {} OFFSET {}
+             "#,
+            per_page, offset
+        )
+    } else {
+        format!(
+            r#"
+             SELECT 
+                 g.id, 
+                 g.room_id, 
+                 g.customer_id, 
+                 g.location, 
+                 g.manufacturer, 
+                 g.device_model, 
+                 g.serial_number, 
+                 g.hostname, 
+                 g.firmware, 
+                 g.password, 
+                 g.primary_mac, 
+                 g.primary_ip, 
+                 g.secondary_mac, 
+                 g.secondary_ip,
+                 r.name AS room_name,
+                 l.name AS location_name,
+                 c.name AS customer_name
+             FROM gear_items g
+             JOIN rooms r ON g.room_id = r.id
+             JOIN locations l ON g.location = l.id
+             JOIN customers c ON g.customer_id = c.id
+             WHERE g.manufacturer LIKE ?
+             OR g.device_model LIKE ?
+             OR g.serial_number LIKE ?
+             OR g.hostname LIKE ?
+             OR g.firmware LIKE ?
+             OR g.primary_mac LIKE ?
+             OR g.primary_ip LIKE ?
+             OR g.secondary_mac LIKE ?
+             OR g.secondary_ip LIKE ?
+             OR r.name LIKE ?
+             OR l.name LIKE ?
+             OR c.name LIKE ?
+             LIMIT {} OFFSET {}
+             "#,
+            per_page, offset
+        )
+    };
+
+    let gear_items = if search_query.is_empty() {
+        sqlx::query_as::<_, GearItemReturn>(&sql)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| format!("Failed to fetch gear items: {}", e))?
+    } else {
+        sqlx::query_as::<_, GearItemReturn>(&sql)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .bind(&search_pattern)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| format!("Failed to fetch gear items: {}", e))?
+    };
 
     let total_pages = (total_items.0 as f64 / per_page as f64).ceil() as u32;
     let current_count = gear_items.len() as u32;
