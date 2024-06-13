@@ -74,20 +74,6 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
               </h1>
             </Link>
           </div>
-
-          {listingOptions && (
-            <div className="flex items-center gap-3">
-              <hr className="w-10 h-[0.5px] border-none bg-gray-500 rotate-90" />
-
-              <div className="rounded-full overflow-hidden w-20">
-                <Button variant="grey" className="rounded-full">
-                  <div className="rotate-90">
-                    <RiSoundModuleFill />
-                  </div>
-                </Button>
-              </div>
-            </div>
-          )}
         </article>
 
         <article className="flex items-center gap-4">

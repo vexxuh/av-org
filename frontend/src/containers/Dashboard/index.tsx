@@ -30,6 +30,7 @@ import TablePagination from "./Pagination";
 // Utils
 import { Paths } from "@/utils/config/paths";
 import { exportTable } from "@/utils/functions/exportTable";
+import DashboardFilters from "./Filters";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
@@ -40,13 +41,25 @@ const Dashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageString, setPageString] = useState("0-0 of 0" as string);
+  const [filters, setFilters] = useState<{ [key: string]: any }>({});
 
   const handleFetchItems = async (search: string = "") => {
     setLoading(true);
 
+    const validFilters = Object.keys(filters).reduce((acc, key) => {
+      if (filters[key]) {
+        acc[key] = filters[key];
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+    const filterString = Object.keys(validFilters)
+      .map((key) => `${key}=${validFilters[key]}`)
+      .join("&");
+
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}&page=${currentPage}&search=${search}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}?limit=${limit}&page=${currentPage}&search=${search}&${filterString}`
       );
 
       setData(data?.gear_items);
@@ -69,7 +82,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     handleFetchItems();
-  }, [limit, currentPage]);
+  }, [limit, currentPage, filters]);
 
   const handleExportTable = async (type: string) => {
     const updatedDataWithHeader = [
@@ -158,6 +171,8 @@ const Dashboard: React.FC = () => {
       <Toaster />
 
       <div className="max-w-[1900px] w-full mx-auto p-5">
+        <DashboardFilters submitFilters={setFilters} isLoading={loading} />
+
         <DashboardHeader
           limit={limit}
           handleUpdateLimit={(limit: number) => setLimit(limit)}

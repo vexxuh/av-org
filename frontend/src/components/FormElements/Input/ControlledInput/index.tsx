@@ -41,7 +41,7 @@ const Input: React.FC<InputProps> = ({
 
   return (
     <div
-      className={`mb-${mb} bg-white text-gray-500 ${parentStyles} ${rounded} overflow-hidden`}
+      className={`${parentStyles} ${rounded} mb-${mb} text-gray-500 overflow-hidden`}
     >
       {label && <label htmlFor={id}>{label}</label>}
       <div
