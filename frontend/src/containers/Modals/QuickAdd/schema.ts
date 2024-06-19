@@ -13,6 +13,7 @@ const quickAddSchema = yup.object().shape({
   password: yup.string().required(),
   location: yup.string().required(),
   room: yup.string().required(),
+  customer: yup.string().required(),
 });
 
 export default quickAddSchema;

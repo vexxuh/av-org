@@ -52,11 +52,17 @@ type FormValues = {
   hostname: string;
   firmware: string;
   password: string;
-  location: string;
-  room: string;
 };
 
-const EditContainer: React.FC = () => {
+type EditContainerProps = {
+  pathId: string;
+  redirection?: boolean;
+};
+
+const EditContainer: React.FC<EditContainerProps> = ({
+  pathId,
+  redirection = true,
+}) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>({
     manufacturer: "",
@@ -69,14 +75,9 @@ const EditContainer: React.FC = () => {
     hostname: "",
     firmware: "",
     password: "",
-    location: "",
-    room_id: "",
   });
-  const [locations, setLocations] = useState<LOCATION[] | []>([]);
-  const [rooms, setRooms] = useState<ROOM[] | []>([]);
 
   const { push } = useRouter();
-  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: yupResolver(editItemSchema),
@@ -94,50 +95,25 @@ const EditContainer: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${data.id}`,
         {
           ...values,
-          customer_id: "26ab8229-b838-4c6b-8c43-aeff57d3c296",
-          room_id: values.room,
-          location: values.location,
+          customer_id: data?.customer_id,
+          room_id: data?.room_id,
+          location: data?.location,
         }
       );
 
       toast.success("Gear updated successfully!");
 
-      push(`/${response.data.id}`);
+      redirection && push(`/${response.data.id}`);
     } catch (err) {
       console.error("Error: ", err);
       toast.error("Error updating gear!");
-    }
-  };
-  const handleFetchLocations = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.LOCATION}`
-      );
-
-      setLocations(response.data);
-    } catch (err) {
-      console.error("Error: ", err);
-    }
-  };
-
-  const handleFetchRooms = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}`
-      );
-
-      setRooms(response.data);
-    } catch (err) {
-      console.error("Error: ", err);
     }
   };
 
   const handleFetchData = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${
-          pathname.split("/")[1]
-        }`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${pathId}`
       );
 
       if (!data?.id) {
@@ -153,8 +129,6 @@ const EditContainer: React.FC = () => {
 
   useEffect(() => {
     handleFetchData();
-    handleFetchLocations();
-    handleFetchRooms();
   }, []);
 
   useEffect(() => {
@@ -168,8 +142,6 @@ const EditContainer: React.FC = () => {
     setValue("hostname", data?.hostname);
     setValue("firmware", data?.firmware);
     setValue("password", data?.password);
-    setValue("location", data?.location);
-    setValue("room", data?.room_id);
   }, [data]);
 
   return (
@@ -216,85 +188,6 @@ const EditContainer: React.FC = () => {
                   error={errors?.device_model?.message}
                   required
                   disabled={isSubmitting}
-                />
-
-                <Controller
-                  name="location"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          disabled={isSubmitting}
-                          defaultValue={data?.location}
-                        >
-                          <SelectTrigger
-                            className="bg-white h-12 shadow-md rounded-md"
-                            id="location"
-                          >
-                            <SelectValue
-                              placeholder={
-                                data?.location_name || "Select a location"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white">
-                            {locations.length > 0 &&
-                              locations?.map((location) => (
-                                <SelectItem
-                                  value={location?.id}
-                                  className="hover:bg-gray-200 cursor-pointer"
-                                  key={location?.id}
-                                >
-                                  {location?.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage>{errors.location?.message}</FormMessage>
-                    </FormItem>
-                  )}
-                />
-
-                <Controller
-                  name="room"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Room</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          disabled={isSubmitting}
-                          defaultValue={data?.room_id}
-                        >
-                          <SelectTrigger
-                            className="bg-white h-12 shadow-md rounded-md"
-                            id="room"
-                          >
-                            <SelectValue
-                              placeholder={data?.room_name || "Select a room"}
-                            />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white">
-                            {rooms?.map((room) => (
-                              <SelectItem
-                                value={room?.id}
-                                className="hover:bg-gray-200 cursor-pointer"
-                                key={room?.id}
-                              >
-                                {room?.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage>{errors.room?.message}</FormMessage>
-                    </FormItem>
-                  )}
                 />
 
                 <Input

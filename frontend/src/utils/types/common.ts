@@ -9,3 +9,8 @@ export type ROOM = {
   name: string;
   location_id: string;
 };
+
+export type CUSTOMER = {
+  id: string;
+  name: string;
+};
