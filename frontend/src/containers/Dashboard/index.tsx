@@ -208,7 +208,7 @@ const Dashboard: React.FC = () => {
                   ))
                 ) : data.length > 0 ? (
                   data?.map((item: any) => (
-                    <TableRow key={item?.id}>
+                    <TableRow key={item?.id} className=" odd:bg-gray-100">
                       <TableCell>{item?.customer_name}</TableCell>
                       <TableCell>{item?.location_name}</TableCell>
                       <TableCell>{item?.room_name}</TableCell>
@@ -249,7 +249,7 @@ const Dashboard: React.FC = () => {
                 data?.map((item: any) => (
                   <TableRow
                     onClick={() => router.push(`/${item?.id}`)}
-                    className="cursor-pointer"
+                    className="cursor-pointer odd:bg-gray-100 hover:bg-gray-200 transition-all ease-in-out duration-200"
                     key={item?.id}
                   >
                     <TableCell>{item?.manufacturer}</TableCell>
