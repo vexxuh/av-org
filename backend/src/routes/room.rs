@@ -78,6 +78,30 @@ async fn list_rooms() -> Result<Json<Vec<Room>>, String> {
     Ok(Json(rooms))
 }
 
+/**
+ * List Location Rooms
+ * @param location_id: String
+ * @return Json<Vec<Room>>
+ **/
+#[get("/<location_id>")]
+async fn list_location_rooms(location_id: String) -> Result<Json<Vec<Room>>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let rooms = sqlx::query_as::<_, Room>(
+        r#"
+        SELECT id, location_id, name 
+        FROM rooms
+        WHERE location_id = ?
+        "#,
+    )
+    .bind(&location_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch location rooms: {}", e))?;
+
+    Ok(Json(rooms))
+}
+
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_room, list_rooms]
+    routes![create_room, list_rooms, list_location_rooms]
 }

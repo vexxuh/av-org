@@ -78,6 +78,42 @@ async fn list_locations() -> Result<Json<Vec<Location>>, String> {
     Ok(Json(locations))
 }
 
+/**
+ * List Customer Locations
+ * @param customer_id: String
+ * @return Json<Vec<Location>>
+ **/
+#[get("/<customer_id>")]
+async fn list_customer_locations(customer_id: String) -> Result<Json<Vec<Location>>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let customer_exists: (bool,) = sqlx::query_as(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM customers WHERE id = ?
+        )
+        "#,
+    )
+    .bind(&customer_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to check if customer exists: {}", e))?;
+
+    let locations = sqlx::query_as::<_, Location>(
+        r#"
+        SELECT id, customer_id, name 
+        FROM locations
+        WHERE customer_id = ?
+        "#,
+    )
+    .bind(&customer_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch locations: {}", e))?;
+
+    Ok(Json(locations))
+}
+
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_location, list_locations]
+    routes![create_location, list_locations, list_customer_locations]
 }

@@ -94,6 +94,8 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
+    getValues,
+    trigger,
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
@@ -148,7 +150,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
     push(pathname);
   };
 
-  const handelFetchCustomers = async () => {
+  const handleFetchCustomers = async () => {
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.CUSTOMER}`
@@ -161,10 +163,16 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   };
 
   useEffect(() => {
-    handleFetchLocations();
-    handleFetchRooms();
-    handelFetchCustomers();
+    handleFetchCustomers();
   }, []);
+
+  useEffect(() => {
+    if (getValues("customer")) handleFetchLocations();
+  }, [getValues("customer")]);
+
+  useEffect(() => {
+    if (getValues("location")) handleFetchRooms();
+  }, [getValues("location")]);
 
   return (
     <Modal onClose={handleClose}>
@@ -206,6 +214,61 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                 />
               </div>
 
+              <FormField
+                name="customer"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col w-full">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <div className="flex h-12 w-full items-center justify-between cursor-pointer rounded-md shadow-md border  border-[#415778] bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                          {field.value
+                            ? customers.find(
+                                (customer) => customer.id === field.value
+                              )?.name
+                            : "Select Customer"}
+                          <LuChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="min-w-[660px] w-full p-0 z-[1000]">
+                        <FormControl>
+                          <Command>
+                            <CommandInput placeholder="Search Customers..." />
+                            <CommandList>
+                              <CommandEmpty>No customer found.</CommandEmpty>
+                              <CommandGroup>
+                                {customers.map((customer) => (
+                                  <CommandItem
+                                    value={customer.name}
+                                    key={customer.id}
+                                    onSelect={() => {
+                                      form.setValue("customer", customer.id);
+                                      trigger("customer");
+                                    }}
+                                  >
+                                    <LuCheck
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        customer.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {customer.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </FormControl>
+                      </PopoverContent>
+                    </Popover>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="flex flex-col md:flex-row gap-4 w-full">
                 <Controller
                   name="location"
@@ -224,7 +287,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                             <SelectValue placeholder="Select a location" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-[1000]">
-                            {locations.length > 0 &&
+                            {locations.length > 0 ? (
                               locations?.map((location) => (
                                 <SelectItem
                                   value={location?.id}
@@ -233,7 +296,14 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                                 >
                                   {location?.name}
                                 </SelectItem>
-                              ))}
+                              ))
+                            ) : (
+                              <div className="text-center">
+                                {getValues("customer")
+                                  ? "No locations found."
+                                  : "Select a customer first."}
+                              </div>
+                            )}
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -259,15 +329,23 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                             <SelectValue placeholder="Select a room" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-[1000]">
-                            {rooms?.map((room) => (
-                              <SelectItem
-                                value={room?.id}
-                                className="hover:bg-gray-200 cursor-pointer"
-                                key={room?.id}
-                              >
-                                {room?.name}
-                              </SelectItem>
-                            ))}
+                            {rooms.length > 0 ? (
+                              rooms?.map((room) => (
+                                <SelectItem
+                                  value={room?.id}
+                                  className="hover:bg-gray-200 cursor-pointer"
+                                  key={room?.id}
+                                >
+                                  {room?.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <div className="text-center">
+                                {getValues("location")
+                                  ? "No rooms found."
+                                  : "Select a room first."}
+                              </div>
+                            )}
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -276,60 +354,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   )}
                 />
               </div>
-
-              <FormField
-                name="customer"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="flex flex-col w-full">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <div className="flex h-12 w-full items-center justify-between cursor-pointer rounded-md shadow-md border  border-[#415778] bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                            {field.value
-                              ? customers.find(
-                                  (customer) => customer.id === field.value
-                                )?.name
-                              : "Select Customer"}
-                            <LuChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </div>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="min-w-[660px] w-full p-0 z-[1000]">
-                        <Command>
-                          <CommandInput placeholder="Search Customers..." />
-                          <CommandList>
-                            <CommandEmpty>No customer found.</CommandEmpty>
-                            <CommandGroup>
-                              {customers.map((customer) => (
-                                <CommandItem
-                                  value={customer.name}
-                                  key={customer.id}
-                                  onSelect={() => {
-                                    form.setValue("customer", customer.id);
-                                  }}
-                                >
-                                  <LuCheck
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      customer.id === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                  />
-                                  {customer.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <div className="flex flex-col md:flex-row gap-4">
                 <Input
