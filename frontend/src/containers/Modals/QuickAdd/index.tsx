@@ -51,6 +51,12 @@ type FormValues = {
   manufacturer: string;
   device_model: string;
   serial_number: string;
+  primary_mac: string;
+  primary_ip: string;
+  secondary_mac: string;
+  secondary_ip: string;
+  hostname: string;
+  firmware: string;
   password: string;
   location: string;
   room: string;
@@ -81,12 +87,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
           customer_id: "26ab8229-b838-4c6b-8c43-aeff57d3c296",
           room_id: values.room,
           location_id: values.location,
-          primary_mac: "N/A",
-          primary_ip: "N/A",
-          secondary_mac: "N/A",
-          secondary_ip: "N/A",
-          hostname: "N/A",
-          firmware: "N/A",
         }
       );
 
@@ -256,12 +256,71 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                 />
 
                 <Input
+                  id="hostname"
+                  placeholder="Hostname"
+                  error={errors?.hostname?.message}
+                  required
+                  border="border-[1px] border-[#415778]"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-4">
+                <Input
+                  id="firmware"
+                  placeholder="Firmware"
+                  error={errors?.firmware?.message}
+                  required
+                  border="border-[1px] border-[#415778]"
+                  disabled={isSubmitting}
+                />
+
+                <Input
                   id="password"
                   placeholder="Password"
                   error={errors?.password?.message}
                   required
                   border="border-[1px] border-[#415778]"
                   type="password"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-4">
+                <Input
+                  id="primary_mac"
+                  placeholder="Primary MAC"
+                  error={errors?.primary_mac?.message}
+                  required
+                  border="border-[1px] border-[#415778]"
+                  disabled={isSubmitting}
+                />
+
+                <Input
+                  id="primary_ip"
+                  placeholder="Primary IP"
+                  error={errors?.primary_ip?.message}
+                  required
+                  border="border-[1px] border-[#415778]"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-4">
+                <Input
+                  id="secondary_mac"
+                  placeholder="Secondary MAC"
+                  required
+                  border="border-[1px] border-[#415778]"
+                  disabled={isSubmitting}
+                />
+
+                <Input
+                  id="secondary_ip"
+                  placeholder="Secondary IP"
+                  error={errors?.secondary_ip?.message}
+                  required
+                  border="border-[1px] border-[#415778]"
                   disabled={isSubmitting}
                 />
               </div>
