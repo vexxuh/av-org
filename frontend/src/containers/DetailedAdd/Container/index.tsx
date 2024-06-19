@@ -21,6 +21,9 @@ import {
 // React Hot Toast
 import toast, { Toaster } from "react-hot-toast";
 
+// React Icons
+import { LuCheck, LuChevronsUpDown } from "react-icons/lu";
+
 // Components
 import {
   Breadcrumb,
@@ -38,6 +41,7 @@ import {
 } from "@/components/FormElements/Select";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,13 +49,28 @@ import {
 } from "@/components/FormElements/Form";
 import Input from "@/components/FormElements/Input/UncontrolledInput";
 import Button from "@/components/common/Button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/common/Command";
+import CollapsibleEdit from "../CollapsibleEdit";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/common/Popover";
 
 // Schema
 import detailedAddSchema from "./schema";
 
 // Utils
 import { Paths } from "@/utils/config/paths";
-import { LOCATION, ROOM } from "@/utils/types/common";
+import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
+import { cn } from "@/utils/functions/cn";
 
 type FormValues = {
   manufacturer: string;
@@ -66,13 +85,14 @@ type FormValues = {
   password: string;
   location: string;
   room: string;
+  customer: string;
 };
 
 const DetailedAddContainer: React.FC = () => {
-  const { push } = useRouter();
-
   const [locations, setLocations] = useState<LOCATION[] | []>([]);
   const [rooms, setRooms] = useState<ROOM[] | []>([]);
+  const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
+  const [addedGear, setAddedGear] = useState<string[]>([]);
 
   const form = useForm<FormValues>({
     resolver: yupResolver(detailedAddSchema),
@@ -81,16 +101,18 @@ const DetailedAddContainer: React.FC = () => {
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
+    setValue,
+    trigger,
+    getValues,
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
-    console.log("values", values);
     try {
-      const response = await axios.post(
+      const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`,
         {
           ...values,
-          customer_id: "26ab8229-b838-4c6b-8c43-aeff57d3c296",
+          customer_id: values.customer,
           room_id: values.room,
           location_id: values.location,
         }
@@ -98,7 +120,7 @@ const DetailedAddContainer: React.FC = () => {
 
       toast.success("Gear added successfully!");
 
-      push(`/${response.data.id}`);
+      setAddedGear([...addedGear, data.id]);
     } catch (err) {
       console.error("Error: ", err);
       toast.error("Error adding gear!");
@@ -107,11 +129,11 @@ const DetailedAddContainer: React.FC = () => {
 
   const handleFetchLocations = async () => {
     try {
-      const response = await axios.get(
+      const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.LOCATION}`
       );
 
-      setLocations(response.data);
+      setLocations(data);
     } catch (err) {
       console.error("Error: ", err);
     }
@@ -119,11 +141,23 @@ const DetailedAddContainer: React.FC = () => {
 
   const handleFetchRooms = async () => {
     try {
-      const response = await axios.get(
+      const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}`
       );
 
-      setRooms(response.data);
+      setRooms(data);
+    } catch (err) {
+      console.error("Error: ", err);
+    }
+  };
+
+  const handelFetchCustomers = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.CUSTOMER}`
+      );
+
+      setCustomers(data);
     } catch (err) {
       console.error("Error: ", err);
     }
@@ -132,25 +166,20 @@ const DetailedAddContainer: React.FC = () => {
   useEffect(() => {
     handleFetchLocations();
     handleFetchRooms();
+    handelFetchCustomers();
   }, []);
 
   return (
     <section className="flex items-center justify-center">
       <Toaster />
       <div className="max-w-[1900px] w-full mx-auto flex items-center flex-col justify-between px-5 py-7 gap-10">
-        {/* <Breadcrumb className="md:w-full ml-5 print:hidden m-auto">
-          <BreadcrumbList className="text-gray-400 ">
-            <BreadcrumbItem className="hover:text-gray-700 transition-colors duration-200 cursor-pointer">
-              <Link href="/">
-                <BreadcrumbPage>Home</BreadcrumbPage>
-              </Link>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator>/</BreadcrumbSeparator>
-            <BreadcrumbItem className="transition-colors duration-200">
-              <BreadcrumbPage>Detailed Add</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb> */}
+        {addedGear.length > 0 && (
+          <article className="max-w-[900px] w-full flex flex-col gap-4">
+            {addedGear.map((gear) => (
+              <CollapsibleEdit key={gear} id={gear} />
+            ))}
+          </article>
+        )}
 
         <h1 className="text-center w-full text-3xl text-semibold">Add Gear</h1>
 
@@ -160,7 +189,7 @@ const DetailedAddContainer: React.FC = () => {
             className="flex flex-col gap-5 w-full max-w-[900px] mx-auto"
           >
             <FormProvider {...form}>
-              <div className="grid grid-cols-2 items-center gap-5 ">
+              <div className="grid grid-cols-2 gap-5 w-full">
                 <Input
                   id="manufacturer"
                   label="Manufacturer"
@@ -249,7 +278,64 @@ const DetailedAddContainer: React.FC = () => {
                     </FormItem>
                   )}
                 />
+              </div>
 
+              <FormField
+                name="customer"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col w-full">
+                    <FormLabel>Customer</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <div className="flex h-12 w-full items-center justify-between cursor-pointer rounded-md shadow-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                            {field.value
+                              ? customers.find(
+                                  (customer) => customer.id === field.value
+                                )?.name
+                              : "Select Customer"}
+                            <LuChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </div>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="min-w-[440px] w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search Customers..." />
+                          <CommandList>
+                            <CommandEmpty>No customer found.</CommandEmpty>
+                            <CommandGroup>
+                              {customers.map((customer) => (
+                                <CommandItem
+                                  value={customer.name}
+                                  key={customer.id}
+                                  onSelect={() => {
+                                    form.setValue("customer", customer.id);
+                                  }}
+                                >
+                                  <LuCheck
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      customer.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {customer.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-5 w-full">
                 <Input
                   id="serial_number"
                   label="Serial Number"

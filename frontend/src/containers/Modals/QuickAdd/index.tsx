@@ -20,6 +20,7 @@ import {
 
 // React Icons
 import { IoMdClose } from "react-icons/io";
+import { LuCheck, LuChevronsUpDown } from "react-icons/lu";
 
 // Components
 import Modal from "@/components/common/Modal";
@@ -27,7 +28,9 @@ import Input from "@/components/FormElements/Input/UncontrolledInput";
 import Button from "@/components/common/Button";
 import {
   FormControl,
+  FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/FormElements/Form";
 import {
@@ -37,13 +40,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/FormElements/Select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/common/Command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/common/Popover";
 
 // Schema
 import quickAddSchema from "./schema";
 
 // Utils
 import { Paths } from "@/utils/config/paths";
-import { LOCATION, ROOM } from "@/utils/types/common";
+import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
+import { cn } from "@/utils/functions/cn";
 
 type QuickAddModalProps = {};
 
@@ -60,11 +77,13 @@ type FormValues = {
   password: string;
   location: string;
   room: string;
+  customer: string;
 };
 
 const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   const [locations, setLocations] = useState<LOCATION[] | []>([]);
   const [rooms, setRooms] = useState<ROOM[] | []>([]);
+  const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
 
   const { push } = useRouter();
 
@@ -129,9 +148,22 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
     push(pathname);
   };
 
+  const handelFetchCustomers = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.CUSTOMER}`
+      );
+
+      setCustomers(data);
+    } catch (err) {
+      console.error("Error: ", err);
+    }
+  };
+
   useEffect(() => {
     handleFetchLocations();
     handleFetchRooms();
+    handelFetchCustomers();
   }, []);
 
   return (
@@ -244,6 +276,60 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   )}
                 />
               </div>
+
+              <FormField
+                name="customer"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col w-full">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <div className="flex h-12 w-full items-center justify-between cursor-pointer rounded-md shadow-md border  border-[#415778] bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                            {field.value
+                              ? customers.find(
+                                  (customer) => customer.id === field.value
+                                )?.name
+                              : "Select Customer"}
+                            <LuChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </div>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="min-w-[660px] w-full p-0 z-[1000]">
+                        <Command>
+                          <CommandInput placeholder="Search Customers..." />
+                          <CommandList>
+                            <CommandEmpty>No customer found.</CommandEmpty>
+                            <CommandGroup>
+                              {customers.map((customer) => (
+                                <CommandItem
+                                  value={customer.name}
+                                  key={customer.id}
+                                  onSelect={() => {
+                                    form.setValue("customer", customer.id);
+                                  }}
+                                >
+                                  <LuCheck
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      customer.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {customer.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="flex flex-col md:flex-row gap-4">
                 <Input

@@ -2,7 +2,7 @@
 import Layout from "@/components/common/Layout";
 
 // Containers
-import DetailedAddContainer from "@/containers/DetailedAdd";
+import DetailedAddContainer from "@/containers/DetailedAdd/Container";
 
 const DetailedAddPage = () => {
   return (
