@@ -61,6 +61,7 @@ import quickAddSchema from "./schema";
 import { Paths } from "@/utils/config/paths";
 import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
 import { cn } from "@/utils/functions/cn";
+import { useUser } from "@clerk/nextjs";
 
 type QuickAddModalProps = {};
 
@@ -85,6 +86,8 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   const [rooms, setRooms] = useState<ROOM[] | []>([]);
   const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
 
+  const { user } = useUser();
+
   const { push } = useRouter();
 
   const form = useForm<FormValues>({
@@ -96,6 +99,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
     handleSubmit,
     getValues,
     trigger,
+    watch,
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
@@ -105,9 +109,10 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`,
         {
           ...values,
-          customer_id: "26ab8229-b838-4c6b-8c43-aeff57d3c296",
+          customer_id: values.customer,
           room_id: values.room,
           location_id: values.location,
+          user_id: user?.id,
         }
       );
 
@@ -123,7 +128,9 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   const handleFetchLocations = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.LOCATION}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${
+          Paths.LOCATION
+        }?customer_id=${getValues("customer")}`
       );
 
       setLocations(response.data);
@@ -135,7 +142,9 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   const handleFetchRooms = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${
+          Paths.ROOM
+        }?location_id=${getValues("location")}`
       );
 
       setRooms(response.data);
@@ -166,13 +175,19 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
     handleFetchCustomers();
   }, []);
 
+  const selectedCustomer = watch("customer");
   useEffect(() => {
-    if (getValues("customer")) handleFetchLocations();
-  }, [getValues("customer")]);
+    if (selectedCustomer) {
+      handleFetchLocations();
+    }
+  }, [watch("customer")]);
 
+  const selectedLocation = watch("location");
   useEffect(() => {
-    if (getValues("location")) handleFetchRooms();
-  }, [getValues("location")]);
+    if (selectedLocation) {
+      handleFetchRooms();
+    }
+  }, [selectedLocation]);
 
   return (
     <Modal onClose={handleClose}>
@@ -287,7 +302,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                             <SelectValue placeholder="Select a location" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-[1000]">
-                            {locations.length > 0 ? (
+                            {locations?.length > 0 ? (
                               locations?.map((location) => (
                                 <SelectItem
                                   value={location?.id}
@@ -329,7 +344,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                             <SelectValue placeholder="Select a room" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-[1000]">
-                            {rooms.length > 0 ? (
+                            {rooms?.length > 0 ? (
                               rooms?.map((room) => (
                                 <SelectItem
                                   value={room?.id}

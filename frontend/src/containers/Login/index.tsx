@@ -24,7 +24,7 @@ import Button from "@/components/common/Button";
 
 // Schema
 import loginSchema from "./schema";
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn, useUser } from "@clerk/nextjs";
 
 // Utils
 
@@ -38,6 +38,7 @@ const LoginContainer = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { signIn } = useSignIn();
+  const { user, isSignedIn } = useUser();
 
   const { push } = useRouter();
 

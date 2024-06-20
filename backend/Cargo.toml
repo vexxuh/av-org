@@ -17,3 +17,4 @@ quote = "1.0"
 dotenv = "0.15"
 clerk = "0.4" 
 rocket_cors = "0.6"
+chrono = { version = "0.4", features = ["serde"] }

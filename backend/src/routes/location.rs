@@ -1,7 +1,8 @@
 use crate::db::db;
 use crate::models::location::Location;
+use chrono::Utc;
 use rocket::serde::json::Json;
-use rocket::{delete, get, post, put};
+use rocket::{delete, get, post, put, Route};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
@@ -15,6 +16,7 @@ async fn create_location(location: Json<Location>) -> Result<Json<Location>, Str
     let pool: &SqlitePool = db().await;
     let new_location = location.into_inner();
     let new_id = Uuid::new_v4().to_string();
+    let now = Utc::now().naive_utc();
 
     let customer_exists: (bool,) = sqlx::query_as(
         r#"
@@ -32,17 +34,22 @@ async fn create_location(location: Json<Location>) -> Result<Json<Location>, Str
         return Err("Customer does not exist".to_string());
     }
 
-    let _result = sqlx::query("INSERT INTO locations (id, name, customer_id) VALUES (?, ?, ?)")
-        .bind(&new_id)
-        .bind(&new_location.name)
-        .bind(&new_location.customer_id)
-        .execute(pool)
-        .await
-        .map_err(|e| format!("Failed to create location: {}", e))?;
+    let _result = sqlx::query(
+        "INSERT INTO locations (id, name, customer_id, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
+    )
+    .bind(&new_id)
+    .bind(&new_location.name)
+    .bind(&new_location.customer_id)
+    .bind(&new_location.user_id)
+    .bind(&now)
+    .bind(&now)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to create location: {}", e))?;
 
     let sql = format!(
         r#"
-        SELECT id, customer_id, name 
+        SELECT id, customer_id, user_id, name, created_at, updated_at
         FROM locations 
         WHERE id = '{}'
         "#,
@@ -59,54 +66,53 @@ async fn create_location(location: Json<Location>) -> Result<Json<Location>, Str
 
 /**
  * List Locations
+ * @param customer_id: Option<String>
  * @return Json<Vec<Location>>
  **/
-#[get("/")]
-async fn list_locations() -> Result<Json<Vec<Location>>, String> {
+#[get("/?<customer_id>")]
+async fn list_locations(customer_id: Option<String>) -> Result<Json<Vec<Location>>, String> {
     let pool: &SqlitePool = db().await;
 
-    let locations = sqlx::query_as::<_, Location>(
-        r#"
-        SELECT id, customer_id, name 
-        FROM locations
-        "#,
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(|e| format!("Failed to fetch locations: {}", e))?;
+    if let Some(customer_id) = customer_id {
+        let customer_exists: (bool,) = {
+            sqlx::query_as(
+                r#"
+                 SELECT EXISTS (
+                     SELECT 1 FROM customers WHERE id = ?
+                 )
+                 "#,
+            )
+            .bind(&customer_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| format!("Failed to check if customer exists: {}", e))?
+        };
 
-    Ok(Json(locations))
-}
+        if !customer_exists.0 {
+            return Err("Customer does not exist".to_string());
+        }
 
-/**
- * List Customer Locations
- * @param customer_id: String
- * @return Json<Vec<Location>>
- **/
-#[get("/<customer_id>")]
-async fn list_customer_locations(customer_id: String) -> Result<Json<Vec<Location>>, String> {
-    let pool: &SqlitePool = db().await;
-
-    let customer_exists: (bool,) = sqlx::query_as(
-        r#"
-        SELECT EXISTS (
-            SELECT 1 FROM customers WHERE id = ?
+        let locations = sqlx::query_as::<_, Location>(
+            r#"
+             SELECT id, customer_id, name, user_id, created_at, updated_at
+             FROM locations
+             WHERE customer_id = ?
+             "#,
         )
-        "#,
-    )
-    .bind(&customer_id)
-    .fetch_one(pool)
-    .await
-    .map_err(|e| format!("Failed to check if customer exists: {}", e))?;
+        .bind(&customer_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch locations: {}", e))?;
+
+        return Ok(Json(locations));
+    }
 
     let locations = sqlx::query_as::<_, Location>(
         r#"
-        SELECT id, customer_id, name 
-        FROM locations
-        WHERE customer_id = ?
-        "#,
+         SELECT id, customer_id, user_id, name, created_at, updated_at
+         FROM locations
+         "#,
     )
-    .bind(&customer_id)
     .fetch_all(pool)
     .await
     .map_err(|e| format!("Failed to fetch locations: {}", e))?;
@@ -114,6 +120,6 @@ async fn list_customer_locations(customer_id: String) -> Result<Json<Vec<Locatio
     Ok(Json(locations))
 }
 
-pub fn routes() -> Vec<rocket::Route> {
-    routes![create_location, list_locations, list_customer_locations]
+pub fn routes() -> Vec<Route> {
+    routes![create_location, list_locations]
 }

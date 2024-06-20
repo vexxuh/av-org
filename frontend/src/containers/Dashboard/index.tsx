@@ -206,7 +206,7 @@ const Dashboard: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : data.length > 0 ? (
+                ) : data?.length > 0 ? (
                   data?.map((item: any) => (
                     <TableRow key={item?.id} className=" odd:bg-gray-100">
                       <TableCell>{item?.customer_name}</TableCell>
@@ -245,7 +245,7 @@ const Dashboard: React.FC = () => {
                 Array.from({ length: limit }).map((_, index) =>
                   renderSkeleton()
                 )
-              ) : data.length > 0 ? (
+              ) : data?.length > 0 ? (
                 data?.map((item: any) => (
                   <TableRow
                     onClick={() => router.push(`/${item?.id}`)}

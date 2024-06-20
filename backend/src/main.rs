@@ -21,6 +21,7 @@ fn rocket() -> _ {
         .attach(db::init())
         .attach(cors::CORS)
         .mount("/api/v1/customer", routes::customer::routes())
+        .mount("/api/v1/user", routes::user::routes())
         .mount("/api/v1/location", routes::location::routes())
         .mount("/api/v1/room", routes::room::routes())
         .mount("/api/v1/gear-item", routes::gear_item::routes())

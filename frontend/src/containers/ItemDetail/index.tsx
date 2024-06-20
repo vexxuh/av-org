@@ -9,6 +9,9 @@ import Link from "next/link";
 // axios
 import axios from "axios";
 
+// Moment
+import moment from "moment";
+
 // React Hot Toast
 import toast, { Toaster } from "react-hot-toast";
 
@@ -232,7 +235,16 @@ const ItemDetailContainer: React.FC = () => {
 
               <div className="flex flex-col gap-1 pb-5">
                 <h4 className="text-lg font-medium">Created At</h4>
-                <p>12/12/2021</p>
+                <p>
+                  {moment(data?.created_at).format("MMMM Do YYYY, h:mm:ss a")}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-1 pb-5">
+                <h4 className="text-lg font-medium">Updated At</h4>
+                <p>
+                  {moment(data?.updated_at).format("MMMM Do YYYY, h:mm:ss a")}
+                </p>
               </div>
             </>
           )}

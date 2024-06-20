@@ -40,6 +40,7 @@ import {
 } from "@/components/FormElements/Form";
 import { LOCATION, ROOM } from "@/utils/types/common";
 import toast, { Toaster } from "react-hot-toast";
+import { useUser } from "@clerk/nextjs";
 
 type FormValues = {
   manufacturer: string;
@@ -79,6 +80,8 @@ const EditContainer: React.FC<EditContainerProps> = ({
 
   const { push } = useRouter();
 
+  const { user } = useUser();
+
   const form = useForm<FormValues>({
     resolver: yupResolver(editItemSchema),
   });
@@ -97,7 +100,8 @@ const EditContainer: React.FC<EditContainerProps> = ({
           ...values,
           customer_id: data?.customer_id,
           room_id: data?.room_id,
-          location: data?.location,
+          location_id: data?.location_id,
+          user_id: user?.id,
         }
       );
 

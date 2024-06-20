@@ -1,5 +1,6 @@
 use crate::db::db;
 use crate::models::gear_item::{GearItem, GearItemReturn};
+use chrono::Utc;
 use rocket::serde::json::Json;
 use rocket::{delete, get, post, put};
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,7 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
     let pool: &SqlitePool = db().await;
     let new_gear_item = gear_item.into_inner();
     let new_id = Uuid::new_v4().to_string();
+    let now = Utc::now().naive_utc();
 
     let room_exists: (bool,) = sqlx::query_as(
         r#"
@@ -60,14 +62,15 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
 
     let _result = sqlx::query(
         r#"
-        INSERT INTO gear_items (id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO gear_items (id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#
     )
     .bind(&new_id)
     .bind(&new_gear_item.room_id)
     .bind(&new_gear_item.customer_id)
-    .bind(&new_gear_item.location)
+    .bind(&new_gear_item.location_id)
+    .bind(&new_gear_item.user_id)
     .bind(&new_gear_item.manufacturer)
     .bind(&new_gear_item.device_model)
     .bind(&new_gear_item.serial_number)
@@ -78,13 +81,15 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
     .bind(&new_gear_item.primary_ip)
     .bind(&new_gear_item.secondary_mac)
     .bind(&new_gear_item.secondary_ip)
+    .bind(&now)
+    .bind(&now)
     .execute(pool)
     .await
     .map_err(|e| format!("Failed to create gear item: {}", e))?;
 
     let sql = format!(
         r#"
-        SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
+        SELECT id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at 
         FROM gear_items 
         WHERE id = '{}'
         "#,
@@ -161,7 +166,7 @@ async fn list_gear_items(
          SELECT COUNT(*)
          FROM gear_items g
          JOIN rooms r ON g.room_id = r.id
-         JOIN locations l ON g.location = l.id
+         JOIN locations l ON g.location_id = l.id
          JOIN customers c ON g.customer_id = c.id
          {}
          "#,
@@ -184,7 +189,8 @@ async fn list_gear_items(
              g.id, 
              g.room_id, 
              g.customer_id, 
-             g.location, 
+             g.user_id, 
+             g.location_id, 
              g.manufacturer, 
              g.device_model, 
              g.serial_number, 
@@ -197,10 +203,12 @@ async fn list_gear_items(
              g.secondary_ip,
              r.name AS room_name,
              l.name AS location_name,
-             c.name AS customer_name
+             c.name AS customer_name,
+             g.created_at,
+             g.updated_at
          FROM gear_items g
          JOIN rooms r ON g.room_id = r.id
-         JOIN locations l ON g.location = l.id
+         JOIN locations l ON g.location_id = l.id
          JOIN customers c ON g.customer_id = c.id
          {}
          LIMIT ? OFFSET ?
@@ -241,17 +249,19 @@ async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>
     let pool: &SqlitePool = db().await;
     let new_gear_item = gear_item.into_inner();
     let new_id = Uuid::new_v4().to_string();
+    let now = Utc::now().naive_utc();
 
     let _result = sqlx::query(
         r#"
-        INSERT INTO gear_items (id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO gear_items (id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#
     )
     .bind(&new_id)
     .bind(&new_gear_item.room_id)
     .bind(&new_gear_item.customer_id)
-    .bind(&new_gear_item.location)
+    .bind(&new_gear_item.location_id)
+    .bind(&new_gear_item.user_id)
     .bind(&new_gear_item.manufacturer)
     .bind(&new_gear_item.device_model)
     .bind(&new_gear_item.serial_number)
@@ -262,13 +272,15 @@ async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>
     .bind(&new_gear_item.primary_ip)
     .bind(&new_gear_item.secondary_mac)
     .bind(&new_gear_item.secondary_ip)
+    .bind(&now)
+    .bind(&now)
     .execute(pool)
     .await
     .map_err(|e| format!("Failed to create gear item: {}", e))?;
 
     let sql = format!(
         r#"
-        SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
+        SELECT id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at 
         FROM gear_items 
         WHERE id = '{}'
         "#,
@@ -298,7 +310,8 @@ async fn get_gear_item_by_id(id: String) -> Result<Json<GearItemReturn>, String>
               g.id, 
               g.room_id, 
               g.customer_id, 
-              g.location, 
+              g.user_id, 
+              g.location_id, 
               g.manufacturer, 
               g.device_model, 
               g.serial_number, 
@@ -311,10 +324,12 @@ async fn get_gear_item_by_id(id: String) -> Result<Json<GearItemReturn>, String>
               g.secondary_ip,
               r.name AS room_name,
               l.name AS location_name,
-              c.name AS customer_name
+              c.name AS customer_name,
+              g.created_at,
+              g.updated_at
           FROM gear_items g
           JOIN rooms r ON g.room_id = r.id
-          JOIN locations l ON g.location = l.id
+          JOIN locations l ON g.location_id = l.id
           JOIN customers c ON g.customer_id = c.id
           WHERE g.id = '{}'
           "#,
@@ -357,17 +372,19 @@ async fn delete_gear_item(id: String) -> Result<Json<String>, String> {
 async fn edit_gear_item(id: String, gear_item: Json<GearItem>) -> Result<Json<GearItem>, String> {
     let pool: &SqlitePool = db().await;
     let updated_gear_item = gear_item.into_inner();
+    let now = Utc::now().naive_utc();
 
     let _result = sqlx::query(
         r#"
         UPDATE gear_items SET
-        room_id = ?, customer_id = ?, location = ?, manufacturer = ?, device_model = ?, serial_number = ?, hostname = ?, firmware = ?, password = ?, primary_mac = ?, primary_ip = ?, secondary_mac = ?, secondary_ip = ?
+        room_id = ?, customer_id = ?, location_id = ?, user_id = ?, manufacturer = ?, device_model = ?, serial_number = ?, hostname = ?, firmware = ?, password = ?, primary_mac = ?, primary_ip = ?, secondary_mac = ?, secondary_ip = ?, updated_at = ?
         WHERE id = ?
         "#
     )
     .bind(&updated_gear_item.room_id)
     .bind(&updated_gear_item.customer_id)
-    .bind(&updated_gear_item.location)
+    .bind(&updated_gear_item.location_id)
+    .bind(&updated_gear_item.user_id)
     .bind(&updated_gear_item.manufacturer)
     .bind(&updated_gear_item.device_model)
     .bind(&updated_gear_item.serial_number)
@@ -378,6 +395,7 @@ async fn edit_gear_item(id: String, gear_item: Json<GearItem>) -> Result<Json<Ge
     .bind(&updated_gear_item.primary_ip)
     .bind(&updated_gear_item.secondary_mac)
     .bind(&updated_gear_item.secondary_ip)
+    .bind(&now)
     .bind(&id)
     .execute(pool)
     .await
@@ -385,7 +403,7 @@ async fn edit_gear_item(id: String, gear_item: Json<GearItem>) -> Result<Json<Ge
 
     let sql = format!(
         r#"
-        SELECT id, room_id, customer_id, location, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip 
+        SELECT id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at
         FROM gear_items 
         WHERE id = '{}'
         "#,

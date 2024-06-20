@@ -71,6 +71,7 @@ import detailedAddSchema from "./schema";
 import { Paths } from "@/utils/config/paths";
 import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
 import { cn } from "@/utils/functions/cn";
+import { useUser } from "@clerk/nextjs";
 
 type FormValues = {
   manufacturer: string;
@@ -94,6 +95,8 @@ const DetailedAddContainer: React.FC = () => {
   const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
   const [addedGear, setAddedGear] = useState<string[]>([]);
 
+  const { user } = useUser();
+
   const form = useForm<FormValues>({
     resolver: yupResolver(detailedAddSchema),
   });
@@ -104,6 +107,7 @@ const DetailedAddContainer: React.FC = () => {
     setValue,
     trigger,
     getValues,
+    watch,
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
@@ -115,6 +119,7 @@ const DetailedAddContainer: React.FC = () => {
           customer_id: values.customer,
           room_id: values.room,
           location_id: values.location,
+          user_id: user?.id,
         }
       );
 
@@ -129,10 +134,9 @@ const DetailedAddContainer: React.FC = () => {
 
   const handleFetchLocations = async () => {
     try {
+      const customer = getValues("customer");
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${
-          Paths.LOCATION
-        }?customer_id=${getValues("customer")}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.LOCATION}?customer_id=${customer}`
       );
 
       setLocations(data);
@@ -143,8 +147,9 @@ const DetailedAddContainer: React.FC = () => {
 
   const handleFetchRooms = async () => {
     try {
+      const location = getValues("location");
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}?location_id=${location}`
       );
 
       setRooms(data);
@@ -169,13 +174,19 @@ const DetailedAddContainer: React.FC = () => {
     handleFetchCustomers();
   }, []);
 
+  const selectedCustomer = watch("customer");
   useEffect(() => {
-    if (getValues("customer")) handleFetchLocations();
-  }, [getValues("customer")]);
+    if (selectedCustomer) {
+      handleFetchLocations();
+    }
+  }, [selectedCustomer]);
 
+  const selectedLocation = watch("location");
   useEffect(() => {
-    if (getValues("location")) handleFetchRooms();
-  }, [getValues("location")]);
+    if (selectedLocation) {
+      handleFetchRooms();
+    }
+  }, [selectedLocation]);
 
   return (
     <section className="flex items-center justify-center">

@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use super::{customer::Customer, location::Location, room::Room};
@@ -7,7 +8,8 @@ pub struct GearItem {
     pub id: Option<String>,
     pub room_id: String,
     pub customer_id: String,
-    pub location: String,
+    pub location_id: String,
+    pub user_id: String,
     pub manufacturer: String,
     pub device_model: String,
     pub serial_number: String,
@@ -18,6 +20,8 @@ pub struct GearItem {
     pub primary_ip: String,
     pub secondary_mac: String,
     pub secondary_ip: String,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -25,7 +29,8 @@ pub struct GearItemReturn {
     pub id: String,
     pub room_id: String,
     pub customer_id: String,
-    pub location: String,
+    pub location_id: String,
+    pub user_id: String,
     pub manufacturer: String,
     pub device_model: String,
     pub serial_number: String,
@@ -39,4 +44,6 @@ pub struct GearItemReturn {
     pub location_name: String,
     pub room_name: String,
     pub customer_name: String,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
