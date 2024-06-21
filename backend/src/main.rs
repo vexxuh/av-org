@@ -25,4 +25,5 @@ fn rocket() -> _ {
         .mount("/api/v1/location", routes::location::routes())
         .mount("/api/v1/room", routes::room::routes())
         .mount("/api/v1/gear-item", routes::gear_item::routes())
+        .mount("/api/v1/tag", routes::tag::routes())
 }

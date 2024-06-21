@@ -48,6 +48,7 @@ import {
   FormMessage,
 } from "@/components/FormElements/Form";
 import Input from "@/components/FormElements/Input/UncontrolledInput";
+import InputControlled from "@/components/FormElements/Input/ControlledInput";
 import Button from "@/components/common/Button";
 import {
   Command,
@@ -72,6 +73,8 @@ import { Paths } from "@/utils/config/paths";
 import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
 import { cn } from "@/utils/functions/cn";
 import { useUser } from "@clerk/nextjs";
+import { IoMdClose } from "react-icons/io";
+import AddTags from "@/components/common/AddTags";
 
 type FormValues = {
   manufacturer: string;
@@ -94,6 +97,8 @@ const DetailedAddContainer: React.FC = () => {
   const [rooms, setRooms] = useState<ROOM[] | []>([]);
   const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
   const [addedGear, setAddedGear] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tag, setTag] = useState<string>("");
 
   const { user } = useUser();
 
@@ -108,6 +113,7 @@ const DetailedAddContainer: React.FC = () => {
     trigger,
     getValues,
     watch,
+    reset,
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
@@ -115,17 +121,27 @@ const DetailedAddContainer: React.FC = () => {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`,
         {
-          ...values,
-          customer_id: values.customer,
-          room_id: values.room,
-          location_id: values.location,
-          user_id: user?.id,
+          gear_item: {
+            ...values,
+            customer_id: values.customer,
+            room_id: values.room,
+            location_id: values.location,
+            user_id: user?.id,
+          },
+          tags: tags?.map((tag) => ({ name: tag, user_id: user?.id })),
         }
       );
 
       toast.success("Gear added successfully!");
 
       setAddedGear([...addedGear, data.id]);
+
+      reset();
+      setTags([]);
+      setTag("");
+      setLocations([]);
+      setRooms([]);
+      setCustomers([]);
     } catch (err) {
       console.error("Error: ", err);
       toast.error("Error adding gear!");
@@ -168,6 +184,26 @@ const DetailedAddContainer: React.FC = () => {
     } catch (err) {
       console.error("Error: ", err);
     }
+  };
+
+  const handleAddTags = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+
+      const inputValue = (e.target as HTMLInputElement).value.trim();
+
+      if (inputValue === "") return;
+
+      if (tags.length >= 30) return;
+      if (tags.includes(inputValue)) return;
+
+      setTags((prev) => [...prev, inputValue]);
+      setTag("");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags((prev) => prev.filter((s) => s !== tag));
   };
 
   useEffect(() => {
@@ -445,6 +481,14 @@ const DetailedAddContainer: React.FC = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
+              <AddTags
+                handleAddTags={handleAddTags}
+                handleRemoveTag={handleRemoveTag}
+                tags={tags}
+                tag={tag}
+                setTag={setTag}
+              />
 
               <Button
                 type="submit"

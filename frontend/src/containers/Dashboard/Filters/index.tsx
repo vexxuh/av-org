@@ -24,6 +24,24 @@ import {
 import Button from "@/components/common/Button";
 import Input from "@/components/FormElements/Input/ControlledInput";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/common/Popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/common/Command";
+import { LuCheck, LuChevronsUpDown } from "react-icons/lu";
+import { cn } from "@/utils/functions/cn";
+import { Paths } from "@/utils/config/paths";
+import { useUser } from "@clerk/nextjs";
+
 type DashboardFiltersProps = {
   submitFilters: React.Dispatch<React.SetStateAction<{ [key: string]: any }>>;
   isLoading?: boolean;
@@ -36,6 +54,12 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [querystrings, setQuerystrings] = useState("");
   const [filters, setFilters] = useState<{ [key: string]: any }>({});
+  const [tags, setTags] = useState<
+    { id: string; name: string; user_id: string }[]
+  >([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const { user } = useUser();
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -53,6 +77,22 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     const qs = new URLSearchParams(newFilters);
     setQuerystrings(qs.toString());
   };
+
+  const handleFetchTags = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.TAG}?user_id=${user?.id}`
+      );
+
+      setTags(data || []);
+    } catch (err) {
+      console.error("Error: ", err);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.id) handleFetchTags();
+  }, [user]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group">
@@ -90,7 +130,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
               }
               disabled={isLoading}
             />
-            <Input
+            {/* <Input
               id="firmware"
               placeholder="Firmware"
               className="h-[48px] outline-none bg-slate-300 text-[#415778] placeholder:text-[#415778] w-full px-3"
@@ -101,7 +141,51 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 handleFilterChange("firmware", e.target.value)
               }
               disabled={isLoading}
-            />
+            /> */}
+            <div>
+              <div className="flex flex-col h-[48px] outline-none  w-full">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="flex h-12 w-full items-center justify-between cursor-pointer rounded-md shadow-md border border-input bg-slate-300 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                      {selectedTag
+                        ? tags?.find((tag) => tag.id === selectedTag)?.name
+                        : "Select Tag"}
+                      <LuChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="min-w-full md:min-w-[600px] w-full p-0 bg-slate-300">
+                    <Command className="bg-slate-300">
+                      <CommandInput placeholder="Search Customers..." />
+                      <CommandList>
+                        <CommandEmpty>No tag found.</CommandEmpty>
+                        <CommandGroup>
+                          {tags?.map((tag) => (
+                            <CommandItem
+                              value={tag.name}
+                              key={tag.id}
+                              onSelect={() => {
+                                setSelectedTag(tag.id);
+                                handleFilterChange("tag", tag.name);
+                              }}
+                            >
+                              <LuCheck
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  tag.id === selectedTag
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {tag.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
           </div>
           <div className="flex justify-between ml-2 mr-2 pt-2">
             <div className="flex gap-3">

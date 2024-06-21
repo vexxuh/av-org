@@ -41,11 +41,18 @@ const Input: React.FC<InputProps> = ({
 
   return (
     <div
-      className={`${parentStyles} ${rounded} mb-${mb} text-gray-500 overflow-hidden`}
+      className={`w-full`}
+      style={{
+        marginBottom: `${mb}px`,
+      }}
     >
-      {label && <label htmlFor={id}>{label}</label>}
+      {label && (
+        <label htmlFor={id} className="mb-10">
+          {label}
+        </label>
+      )}
       <div
-        className={`shadow-md flex items-center w-full overflow-hidden ${
+        className={`${rounded} ${parentStyles} shadow-md flex items-center overflow-hidden relative ${
           error ? "border-error" : ""
         } ${border}`}
       >
@@ -54,7 +61,9 @@ const Input: React.FC<InputProps> = ({
           <input
             type={type === "password" && passwordVisible ? "text" : type}
             id={id}
-            className={`text-gray-900 py-3 px-3 w-full outline-none ${inputClass}`}
+            className={`text-small-normal text-gray-900 py-3 px-3 w-full outline-none ${
+              inputClass || ""
+            }`}
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e)}

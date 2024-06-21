@@ -4,4 +4,5 @@ export const Paths = {
   LOCATION: "/location",
   CUSTOMER: "/customer",
   CREATE_USER: "/user/create-user",
+  TAG: "/tag",
 };

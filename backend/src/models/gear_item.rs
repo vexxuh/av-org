@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use super::{customer::Customer, location::Location, room::Room};
+use super::{customer::Customer, location::Location, room::Room, tag::Tag};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GearItem {
@@ -46,4 +46,10 @@ pub struct GearItemReturn {
     pub customer_name: String,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct GearItemReturnWithTags {
+    pub gear_item: GearItem,
+    pub tags: Vec<Tag>,
 }

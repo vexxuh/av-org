@@ -1,8 +1,9 @@
 use crate::db::db;
-use crate::models::gear_item::{GearItem, GearItemReturn};
+use crate::models::gear_item::{GearItem, GearItemReturn, GearItemReturnWithTags};
+use crate::models::tag::Tag;
 use chrono::Utc;
 use rocket::serde::json::Json;
-use rocket::{delete, get, post, put};
+use rocket::{delete, get, post, put, Route};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use uuid::Uuid;
@@ -16,15 +17,24 @@ pub struct GearItemResponse {
     pub current_page: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GearItemWithTags {
+    pub gear_item: GearItem,
+    pub tags: Vec<Tag>,
+}
+
 /**
  * Create Gear Item
- * @param gear_item: Json<GearItem>
+ * @param gear_item_with_tags: Json<GearItemWithTags>
  * @return Json<GearItem>
  **/
-#[post("/", data = "<gear_item>")]
-async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, String> {
+#[post("/", data = "<gear_item_with_tags>")]
+async fn create_gear_item(
+    gear_item_with_tags: Json<GearItemWithTags>,
+) -> Result<Json<GearItem>, String> {
     let pool: &SqlitePool = db().await;
-    let new_gear_item = gear_item.into_inner();
+    let new_gear_item = &gear_item_with_tags.gear_item;
+    let tags = &gear_item_with_tags.tags;
     let new_id = Uuid::new_v4().to_string();
     let now = Utc::now().naive_utc();
 
@@ -56,7 +66,7 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
     .await
     .map_err(|e| format!("Failed to check if customer exists: {}", e))?;
 
-    if (!customer_exists.0) {
+    if !customer_exists.0 {
         return Err("Customer does not exist".to_string());
     }
 
@@ -87,9 +97,55 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
     .await
     .map_err(|e| format!("Failed to create gear item: {}", e))?;
 
+    for tag_payload in tags {
+        let tag_id = match sqlx::query_as::<_, Tag>(
+            r#"
+            SELECT id, name, user_id, created_at, updated_at
+            FROM tags
+            WHERE name = ?
+            "#,
+        )
+        .bind(&tag_payload.name)
+        .fetch_one(pool)
+        .await
+        {
+            Ok(existing_tag) => existing_tag.id.unwrap(),
+            Err(_) => {
+                let new_tag_id = Uuid::new_v4().to_string();
+                sqlx::query(
+                    r#"
+                    INSERT INTO tags (id, name, user_id, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    "#,
+                )
+                .bind(&new_tag_id)
+                .bind(&tag_payload.name)
+                .bind(&new_gear_item.user_id)
+                .bind(&now)
+                .bind(&now)
+                .execute(pool)
+                .await
+                .map_err(|e| format!("Failed to create tag: {}", e))?;
+                new_tag_id
+            }
+        };
+
+        sqlx::query(
+            r#"
+            INSERT INTO gear_item_tags (gear_item_id, tag_id)
+            VALUES (?, ?)
+            "#,
+        )
+        .bind(&new_id)
+        .bind(&tag_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to associate tag with gear item: {}", e))?;
+    }
+
     let sql = format!(
         r#"
-        SELECT id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at 
+        SELECT id, room_id, customer_id, location_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, user_id, created_at, updated_at
         FROM gear_items 
         WHERE id = '{}'
         "#,
@@ -112,9 +168,10 @@ async fn create_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, S
  * @param manufacturer: Option<String>
  * @param device_model: Option<String>
  * @param firmware: Option<String>
+ * @param tag: Option<String>
  * @return Json<GearItemResponse>
  **/
-#[get("/?<page>&<limit>&<search>&<manufacturer>&<device_model>&<firmware>")]
+#[get("/?<page>&<limit>&<search>&<manufacturer>&<device_model>&<firmware>&<tag>")]
 async fn list_gear_items(
     page: Option<u32>,
     limit: Option<u32>,
@@ -122,6 +179,7 @@ async fn list_gear_items(
     manufacturer: Option<String>,
     device_model: Option<String>,
     firmware: Option<String>,
+    tag: Option<String>,
 ) -> Result<Json<GearItemResponse>, String> {
     let pool: &SqlitePool = db().await;
 
@@ -155,6 +213,11 @@ async fn list_gear_items(
         params.push(firmware.clone());
     }
 
+    if let Some(ref tag_name) = tag {
+        filters.push("t.name = ?");
+        params.push(tag_name.clone());
+    }
+
     let filters_sql = if filters.is_empty() {
         "".to_string()
     } else {
@@ -163,13 +226,15 @@ async fn list_gear_items(
 
     let total_items_query = format!(
         r#"
-         SELECT COUNT(*)
-         FROM gear_items g
-         JOIN rooms r ON g.room_id = r.id
-         JOIN locations l ON g.location_id = l.id
-         JOIN customers c ON g.customer_id = c.id
-         {}
-         "#,
+          SELECT COUNT(DISTINCT g.id)
+          FROM gear_items g
+          JOIN rooms r ON g.room_id = r.id
+          JOIN locations l ON g.location_id = l.id
+          JOIN customers c ON g.customer_id = c.id
+          LEFT JOIN gear_item_tags git ON g.id = git.gear_item_id
+          LEFT JOIN tags t ON git.tag_id = t.id
+          {}
+          "#,
         filters_sql
     );
 
@@ -185,34 +250,37 @@ async fn list_gear_items(
 
     let sql = format!(
         r#"
-         SELECT 
-             g.id, 
-             g.room_id, 
-             g.customer_id, 
-             g.user_id, 
-             g.location_id, 
-             g.manufacturer, 
-             g.device_model, 
-             g.serial_number, 
-             g.hostname, 
-             g.firmware, 
-             g.password, 
-             g.primary_mac, 
-             g.primary_ip, 
-             g.secondary_mac, 
-             g.secondary_ip,
-             r.name AS room_name,
-             l.name AS location_name,
-             c.name AS customer_name,
-             g.created_at,
-             g.updated_at
-         FROM gear_items g
-         JOIN rooms r ON g.room_id = r.id
-         JOIN locations l ON g.location_id = l.id
-         JOIN customers c ON g.customer_id = c.id
-         {}
-         LIMIT ? OFFSET ?
-         "#,
+          SELECT 
+              g.id, 
+              g.room_id, 
+              g.customer_id, 
+              g.user_id, 
+              g.location_id, 
+              g.manufacturer, 
+              g.device_model, 
+              g.serial_number, 
+              g.hostname, 
+              g.firmware, 
+              g.password, 
+              g.primary_mac, 
+              g.primary_ip, 
+              g.secondary_mac, 
+              g.secondary_ip,
+              r.name AS room_name,
+              l.name AS location_name,
+              c.name AS customer_name,
+              g.created_at,
+              g.updated_at
+          FROM gear_items g
+          JOIN rooms r ON g.room_id = r.id
+          JOIN locations l ON g.location_id = l.id
+          JOIN customers c ON g.customer_id = c.id
+          LEFT JOIN gear_item_tags git ON g.id = git.gear_item_id
+          LEFT JOIN tags t ON git.tag_id = t.id
+          {}
+          GROUP BY g.id
+          LIMIT ? OFFSET ?
+          "#,
         filters_sql
     );
 
@@ -241,13 +309,16 @@ async fn list_gear_items(
 
 /**
  * Quick Add Gear Item
- * @param gear_item: Json<GearItem>
+ * @param gear_item_with_tags: Json<GearItemWithTags>
  * @return Json<GearItem>
  **/
-#[post("/quick_add", data = "<gear_item>")]
-async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>, String> {
+#[post("/quick_add", data = "<gear_item_with_tags>")]
+async fn quick_add_gear_item(
+    gear_item_with_tags: Json<GearItemWithTags>,
+) -> Result<Json<GearItem>, String> {
     let pool: &SqlitePool = db().await;
-    let new_gear_item = gear_item.into_inner();
+    let new_gear_item = &gear_item_with_tags.gear_item;
+    let tags = &gear_item_with_tags.tags;
     let new_id = Uuid::new_v4().to_string();
     let now = Utc::now().naive_utc();
 
@@ -278,9 +349,55 @@ async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>
     .await
     .map_err(|e| format!("Failed to create gear item: {}", e))?;
 
+    for tag_payload in tags {
+        let tag_id = match sqlx::query_as::<_, Tag>(
+            r#"
+            SELECT id, name, user_id, created_at, updated_at
+            FROM tags
+            WHERE name = ?
+            "#,
+        )
+        .bind(&tag_payload.name)
+        .fetch_one(pool)
+        .await
+        {
+            Ok(existing_tag) => existing_tag.id.unwrap(),
+            Err(_) => {
+                let new_tag_id = Uuid::new_v4().to_string();
+                sqlx::query(
+                    r#"
+                    INSERT INTO tags (id, name, user_id, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    "#,
+                )
+                .bind(&new_tag_id)
+                .bind(&tag_payload.name)
+                .bind(&new_gear_item.user_id)
+                .bind(&now)
+                .bind(&now)
+                .execute(pool)
+                .await
+                .map_err(|e| format!("Failed to create tag: {}", e))?;
+                new_tag_id
+            }
+        };
+
+        sqlx::query(
+            r#"
+            INSERT INTO gear_item_tags (gear_item_id, tag_id)
+            VALUES (?, ?)
+            "#,
+        )
+        .bind(&new_id)
+        .bind(&tag_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to associate tag with gear item: {}", e))?;
+    }
+
     let sql = format!(
         r#"
-        SELECT id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at 
+        SELECT id, room_id, customer_id, location_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, user_id, created_at, updated_at
         FROM gear_items 
         WHERE id = '{}'
         "#,
@@ -301,7 +418,7 @@ async fn quick_add_gear_item(gear_item: Json<GearItem>) -> Result<Json<GearItem>
  * @return Json<GearItemReturn>
  **/
 #[get("/<id>")]
-async fn get_gear_item_by_id(id: String) -> Result<Json<GearItemReturn>, String> {
+async fn get_gear_item_by_id(id: String) -> Result<Json<GearItemReturnWithTags>, String> {
     let pool: &SqlitePool = db().await;
 
     let sql = format!(
@@ -341,7 +458,43 @@ async fn get_gear_item_by_id(id: String) -> Result<Json<GearItemReturn>, String>
         .await
         .map_err(|e| format!("Failed to fetch gear item: {}", e))?;
 
-    Ok(Json(gear_item))
+    let tags = sqlx::query_as::<_, Tag>(
+        r#"
+        SELECT t.id, t.name, t.user_id, t.created_at, t.updated_at
+        FROM tags t
+        JOIN gear_item_tags git ON t.id = git.tag_id
+        WHERE git.gear_item_id = ?
+        "#,
+    )
+    .bind(&id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch tags: {}", e))?;
+
+    let gear_item_with_tags = GearItemReturnWithTags {
+        tags,
+        gear_item: GearItem {
+            id: Some(gear_item.id.clone()),
+            room_id: gear_item.room_id.clone(),
+            customer_id: gear_item.customer_id.clone(),
+            location_id: gear_item.location_id.clone(),
+            user_id: gear_item.user_id.clone(),
+            manufacturer: gear_item.manufacturer.clone(),
+            device_model: gear_item.device_model.clone(),
+            serial_number: gear_item.serial_number.clone(),
+            hostname: gear_item.hostname.clone(),
+            firmware: gear_item.firmware.clone(),
+            password: gear_item.password.clone(),
+            primary_mac: gear_item.primary_mac.clone(),
+            primary_ip: gear_item.primary_ip.clone(),
+            secondary_mac: gear_item.secondary_mac.clone(),
+            secondary_ip: gear_item.secondary_ip.clone(),
+            created_at: gear_item.created_at.clone(),
+            updated_at: gear_item.updated_at.clone(),
+        },
+    };
+
+    Ok(Json(gear_item_with_tags))
 }
 
 /**
@@ -365,13 +518,17 @@ async fn delete_gear_item(id: String) -> Result<Json<String>, String> {
 /**
  * Edit Gear Item
  * @param id: String
- * @param gear_item: Json<GearItem>
+ * @param gear_item_with_tags: Json<GearItemWithTags>
  * @return Json<GearItem>
  */
-#[put("/<id>", data = "<gear_item>")]
-async fn edit_gear_item(id: String, gear_item: Json<GearItem>) -> Result<Json<GearItem>, String> {
+#[put("/<id>", data = "<gear_item_with_tags>")]
+async fn edit_gear_item(
+    id: String,
+    gear_item_with_tags: Json<GearItemWithTags>,
+) -> Result<Json<GearItem>, String> {
     let pool: &SqlitePool = db().await;
-    let updated_gear_item = gear_item.into_inner();
+    let updated_gear_item = &gear_item_with_tags.gear_item;
+    let tags = &gear_item_with_tags.tags;
     let now = Utc::now().naive_utc();
 
     let _result = sqlx::query(
@@ -401,6 +558,58 @@ async fn edit_gear_item(id: String, gear_item: Json<GearItem>) -> Result<Json<Ge
     .await
     .map_err(|e| format!("Failed to update gear item: {}", e))?;
 
+    let _result = sqlx::query("DELETE FROM gear_item_tags WHERE gear_item_id = ?")
+        .bind(&id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to delete old tags: {}", e))?;
+
+    for tag_payload in tags {
+        let tag_id = match sqlx::query_as::<_, Tag>(
+            r#"
+            SELECT id, name, user_id, created_at, updated_at
+            FROM tags
+            WHERE name = ?
+            "#,
+        )
+        .bind(&tag_payload.name)
+        .fetch_one(pool)
+        .await
+        {
+            Ok(existing_tag) => existing_tag.id.unwrap(),
+            Err(_) => {
+                let new_tag_id = Uuid::new_v4().to_string();
+                sqlx::query(
+                    r#"
+                    INSERT INTO tags (id, name, user_id, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    "#,
+                )
+                .bind(&new_tag_id)
+                .bind(&tag_payload.name)
+                .bind(&updated_gear_item.user_id)
+                .bind(&now)
+                .bind(&now)
+                .execute(pool)
+                .await
+                .map_err(|e| format!("Failed to create tag: {}", e))?;
+                new_tag_id
+            }
+        };
+
+        sqlx::query(
+            r#"
+            INSERT INTO gear_item_tags (gear_item_id, tag_id)
+            VALUES (?, ?)
+            "#,
+        )
+        .bind(&id)
+        .bind(&tag_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to associate tag with gear item: {}", e))?;
+    }
+
     let sql = format!(
         r#"
         SELECT id, room_id, customer_id, location_id, user_id, manufacturer, device_model, serial_number, hostname, firmware, password, primary_mac, primary_ip, secondary_mac, secondary_ip, created_at, updated_at
@@ -418,7 +627,7 @@ async fn edit_gear_item(id: String, gear_item: Json<GearItem>) -> Result<Json<Ge
     Ok(Json(edited_gear_item))
 }
 
-pub fn routes() -> Vec<rocket::Route> {
+pub fn routes() -> Vec<Route> {
     routes![
         create_gear_item,
         list_gear_items,

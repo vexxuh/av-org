@@ -41,6 +41,7 @@ import {
 import { LOCATION, ROOM } from "@/utils/types/common";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@clerk/nextjs";
+import AddTags from "@/components/common/AddTags";
 
 type FormValues = {
   manufacturer: string;
@@ -76,7 +77,10 @@ const EditContainer: React.FC<EditContainerProps> = ({
     hostname: "",
     firmware: "",
     password: "",
+    tags: [],
   });
+  const [tags, setTags] = useState<string[]>([]);
+  const [tag, setTag] = useState<string>("");
 
   const { push } = useRouter();
 
@@ -97,11 +101,14 @@ const EditContainer: React.FC<EditContainerProps> = ({
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${data.id}`,
         {
-          ...values,
-          customer_id: data?.customer_id,
-          room_id: data?.room_id,
-          location_id: data?.location_id,
-          user_id: user?.id,
+          gear_item: {
+            ...values,
+            customer_id: data?.customer_id,
+            room_id: data?.room_id,
+            location_id: data?.location_id,
+            user_id: user?.id,
+          },
+          tags: tags.map((tag) => ({ name: tag, user_id: user?.id })),
         }
       );
 
@@ -120,11 +127,12 @@ const EditContainer: React.FC<EditContainerProps> = ({
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}/${pathId}`
       );
 
-      if (!data?.id) {
+      if (!data?.gear_item?.id) {
         return push("/");
       }
 
-      setData(data);
+      setData(data?.gear_item);
+      setTags(data?.tags.map((tag: any) => tag.name));
     } catch (error) {
       console.error(error);
       push("/");
@@ -134,6 +142,26 @@ const EditContainer: React.FC<EditContainerProps> = ({
   useEffect(() => {
     handleFetchData();
   }, []);
+
+  const handleAddTags = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+
+      const inputValue = (e.target as HTMLInputElement).value.trim();
+
+      if (inputValue === "") return;
+
+      if (tags.length >= 30) return;
+      if (tags.includes(inputValue)) return;
+
+      setTags((prev) => [...prev, inputValue]);
+      setTag("");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags((prev) => prev.filter((s) => s !== tag));
+  };
 
   useEffect(() => {
     setValue("manufacturer", data?.manufacturer);
@@ -266,6 +294,14 @@ const EditContainer: React.FC<EditContainerProps> = ({
                   disabled={isSubmitting}
                 />
               </div>
+
+              <AddTags
+                handleAddTags={handleAddTags}
+                handleRemoveTag={handleRemoveTag}
+                tags={tags}
+                tag={tag}
+                setTag={setTag}
+              />
 
               <Button
                 type="submit"

@@ -55,6 +55,22 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
             FOREIGN KEY (location_id) REFERENCES locations(id)
         );
 
+        CREATE TABLE IF NOT EXISTS tags (
+            id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL UNIQUE,
+            user_id TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS gear_item_tags (
+            gear_item_id TEXT NOT NULL,
+            tag_id TEXT NOT NULL,
+            PRIMARY KEY (gear_item_id, tag_id),
+            FOREIGN KEY (gear_item_id) REFERENCES gear_items(id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        );
+
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY NOT NULL,
             email TEXT NOT NULL UNIQUE,
@@ -69,6 +85,7 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
         DROP TRIGGER IF EXISTS update_rooms_updated_at;
         DROP TRIGGER IF EXISTS update_gear_items_updated_at;
         DROP TRIGGER IF EXISTS update_users_updated_at;
+        DROP TRIGGER IF EXISTS update_tags_updated_at;
 
         CREATE TRIGGER update_customers_updated_at
         AFTER UPDATE ON customers
@@ -102,6 +119,15 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
         FOR EACH ROW
         BEGIN
             UPDATE gear_items
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = old.id;
+        END;
+
+        CREATE TRIGGER update_tags_updated_at
+        AFTER UPDATE ON tags
+        FOR EACH ROW
+        BEGIN
+            UPDATE tags
             SET updated_at = CURRENT_TIMESTAMP
             WHERE id = old.id;
         END;

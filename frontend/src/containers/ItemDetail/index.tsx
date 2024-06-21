@@ -36,6 +36,7 @@ const ItemDetailContainer: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [tags, setTags] = useState<string[]>([]);
 
   const pathname = usePathname();
 
@@ -67,11 +68,12 @@ const ItemDetailContainer: React.FC = () => {
         }`
       );
 
-      if (!data?.id) {
+      if (!data?.gear_item?.id) {
         return push("/");
       }
 
-      setData(data);
+      setData(data?.gear_item);
+      setTags(data?.tags.map((tag: any) => tag.name));
     } catch (error) {
       console.error(error);
       push("/");
@@ -167,6 +169,11 @@ const ItemDetailContainer: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1 pb-5">
+                <h4 className="text-lg font-medium">Tags</h4>
+                <Skeleton height={25} width={200} />
+              </div>
+
+              <div className="flex flex-col gap-1 pb-5">
                 <h4 className="text-lg font-medium">Secondary MAC</h4>
                 <Skeleton height={25} width={200} />
               </div>
@@ -231,6 +238,11 @@ const ItemDetailContainer: React.FC = () => {
               <div className="flex flex-col gap-1 pb-5">
                 <h4 className="text-lg font-medium">Secondary MAC</h4>
                 <p>{data?.secondary_mac}</p>
+              </div>
+
+              <div className="flex flex-col gap-1 pb-5">
+                <h4 className="text-lg font-medium">Tags</h4>
+                <p>{tags.join(", ")}</p>
               </div>
 
               <div className="flex flex-col gap-1 pb-5">
