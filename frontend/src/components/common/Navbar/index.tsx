@@ -14,15 +14,15 @@ import { FaGears } from "react-icons/fa6";
 import { MdAccountCircle, MdDynamicForm } from "react-icons/md";
 import { LogOut, User } from "lucide-react";
 import { IoIosArrowDown } from "react-icons/io";
-import { LuPlus } from "react-icons/lu";
 import { SlEnergy } from "react-icons/sl";
-import { RiSoundModuleFill } from "react-icons/ri";
+import { FaSearch, FaTools } from "react-icons/fa";
+import { TbSettingsCog } from "react-icons/tb";
 
+// Cookie
 import cookies from "js-cookie";
 
 // Components
 import Input from "@/components/FormElements/Input/ControlledInput";
-import { FaSearch } from "react-icons/fa";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,10 +89,10 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                       variant="grey"
                       size="sm"
                       iconEnd={<IoIosArrowDown />}
-                      iconStart={<LuPlus />}
+                      iconStart={<FaTools />}
                       className="rounded-full"
                     >
-                      Add
+                      Tools
                     </Button>
                   </span>
                 </DropdownMenuTrigger>
@@ -119,6 +119,16 @@ const Navbar: React.FC<NavbarProps> = ({ listingOptions = false }) => {
                     >
                       <MdDynamicForm className="h-4 w-4" />
                       <span>Detailed</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-gray-300 cursor-pointer px-3 py-1 outline-none border-none">
+                    <Link
+                      href="/customer-location-updater"
+                      className="flex items-center gap-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <TbSettingsCog className="h-4 w-4" />
+                      <span>Manage</span>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

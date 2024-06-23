@@ -19,7 +19,7 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
             user_id TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            FOREIGN KEY (customer_id) REFERENCES customers(id)
+            FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS rooms (

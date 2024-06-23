@@ -29,6 +29,7 @@ interface ButtonProps {
   type?: "button" | "submit";
   className?: string;
   title?: string;
+  icon?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -43,12 +44,13 @@ const Button: React.FC<ButtonProps> = ({
   type = "button",
   className = "",
   title = "",
+  icon = false,
 }) => {
   return (
     <button
-      className={`cursor-pointer relative transition ease-out duration-300 flex items-center justify-center gap-2 ${
+      className={`${className} cursor-pointer relative transition ease-out duration-300 flex items-center justify-center gap-2 ${
         size === "sm" ? "py-3 px-5 text-sm" : "py-4 px-8 text-base"
-      } rounded-md w-full ${generateButtonStyle(variant)} ${className}`}
+      } rounded-md w-full ${generateButtonStyle(variant)}`}
       onClick={onClick}
       disabled={disabled}
       type={type}
@@ -88,7 +90,7 @@ const Button: React.FC<ButtonProps> = ({
 const generateButtonStyle = (variant: string) => {
   switch (variant) {
     case "green":
-      return "bg-black text-blue-mag font-medium hover:bg-green text-white";
+      return "bg-green-600 text-blue-mag font-medium hover:bg-green text-white";
     case "dark-blue":
       return "bg-blue text-white font-medium hover:bg-blue-dark text-white";
     case "transparent":

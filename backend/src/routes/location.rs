@@ -120,6 +120,45 @@ async fn list_locations(customer_id: Option<String>) -> Result<Json<Vec<Location
     Ok(Json(locations))
 }
 
+/**
+ * Delete Location
+ * @param id: String
+ * @param user_id: String
+ * @return Result<Json<String>, String>
+ */
+#[delete("/<id>?<user_id>")]
+async fn delete_location(id: String, user_id: String) -> Result<Json<String>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let location: Option<(String,)> = sqlx::query_as(
+        r#"
+        SELECT user_id
+        FROM locations
+        WHERE id = ?
+        "#,
+    )
+    .bind(&id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Failed to check if location exists: {}", e))?;
+
+    if let Some((location_user_id,)) = location {
+        if location_user_id != user_id {
+            return Err(format!("Unauthorized to delete this location").into());
+        }
+    } else {
+        return Err(format!("Location with id {} does not exist", id).into());
+    }
+
+    let _result = sqlx::query("DELETE FROM locations WHERE id = ?")
+        .bind(&id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to delete location: {}", e))?;
+
+    Ok(Json(id))
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![create_location, list_locations]
+    routes![create_location, list_locations, delete_location]
 }

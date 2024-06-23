@@ -81,7 +81,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   const handleFetchTags = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.TAG}?user_id=${user?.id}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.TAG}`
       );
 
       setTags(data || []);

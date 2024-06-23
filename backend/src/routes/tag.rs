@@ -5,6 +5,27 @@ use rocket::serde::json::Json;
 use sqlx::SqlitePool;
 
 /**
+ * List Tags
+ * @return Json<Vec<Tag>>
+ **/
+#[get("/")]
+async fn list_tags() -> Result<Json<Vec<Tag>>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let tags = sqlx::query_as::<_, Tag>(
+        r#"
+        SELECT id, name, user_id, created_at, updated_at
+        FROM tags
+        "#,
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch tags: {}", e))?;
+
+    Ok(Json(tags))
+}
+
+/**
  * List Tags for a User
  * @param user_id: String
  * @return Json<Vec<Tag>>
@@ -29,5 +50,5 @@ async fn list_tags_for_user(user_id: String) -> Result<Json<Vec<Tag>>, String> {
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![list_tags_for_user]
+    routes![list_tags_for_user, list_tags]
 }
