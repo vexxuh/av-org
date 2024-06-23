@@ -1,11 +1,23 @@
 import React, { use, useState } from "react";
-import Button from "../Button";
+
+// Clerk
+import { useUser } from "@clerk/nextjs";
+
+// React Icons
 import { MdOutlineAdd, MdOutlineDeleteOutline } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
+
+// React Hot Toast
 import toast, { Toaster } from "react-hot-toast";
+
+// axios
 import axios from "axios";
+
+// Components
+import Button from "../Button";
+
+// Utils
 import { Paths } from "@/utils/config/paths";
-import { useUser } from "@clerk/nextjs";
 
 export type Node = {
   id: string;

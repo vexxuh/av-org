@@ -1,11 +1,24 @@
-import Hierarchy, { Node } from "@/components/common/Hierarchy";
-import { Paths } from "@/utils/config/paths";
-import { useUser } from "@clerk/nextjs";
-import axios from "axios";
 import React, { useEffect, useState } from "react";
+
+// Clerk
+import { useUser } from "@clerk/nextjs";
+
+// axios
+import axios from "axios";
+
+// React Hot Toast
 import toast, { Toaster } from "react-hot-toast";
+
+// React Loading Skeleton
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+
+// Components
+import Hierarchy, { Node } from "@/components/common/Hierarchy";
+
+// Utils
+import { Paths } from "@/utils/config/paths";
+
 const CLUpdaterContainer: React.FC = () => {
   const [data, setData] = useState<Node[] | []>([]);
   const [isLoading, setIsLoading] = useState(true);
