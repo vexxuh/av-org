@@ -150,7 +150,31 @@ async fn delete_location(id: String, user_id: String) -> Result<Json<String>, St
         return Err(format!("Location with id {} does not exist", id).into());
     }
 
-    let _result = sqlx::query("DELETE FROM locations WHERE id = ?")
+    let _update_result = sqlx::query(
+        r#"
+        UPDATE gear_items
+        SET location_id = NULL
+        WHERE location_id = ?
+        "#,
+    )
+    .bind(&id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to update gear items: {}", e))?;
+
+    let _update_rooms_result = sqlx::query(
+        r#"
+        UPDATE rooms
+        SET location_id = NULL
+        WHERE location_id = ?
+        "#,
+    )
+    .bind(&id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to update rooms: {}", e))?;
+
+    let _delete_location_result = sqlx::query("DELETE FROM locations WHERE id = ?")
         .bind(&id)
         .execute(pool)
         .await

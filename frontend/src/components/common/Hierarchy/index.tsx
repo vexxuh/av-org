@@ -1,4 +1,4 @@
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 
 // Clerk
 import { useUser } from "@clerk/nextjs";
@@ -26,44 +26,74 @@ export type Node = {
   rooms?: Node[];
 };
 
+const isPathType = (type: string): type is keyof typeof Paths => {
+  return type.toUpperCase() in Paths;
+};
+
 const TreeNode: React.FC<{
   data: Node[];
   node: Node;
   setData: React.Dispatch<React.SetStateAction<Node[]>>;
   parentId?: string;
-}> = ({ node, setData, data, parentId }) => {
+  parentType?: "customer" | "location";
+}> = ({ node, setData, data, parentId, parentType }) => {
   const { user } = useUser();
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const handleDeleteLocation = async (id: string) => {
+  const handleDelete = async (
+    type: "customer" | "location" | "room",
+    id: string
+  ) => {
     setDeleteLoading(true);
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.LOCATION}/${id}?user_id=${user?.id}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${
+          Paths[type.toUpperCase() as "CUSTOMER" | "LOCATION" | "ROOM"]
+        }/${id}?user_id=${user?.id}`
       );
 
-      toast.success("Location deleted successfully");
+      toast.success(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`
+      );
 
-      const newData = data.map((item) => {
-        if (item.id === parentId) {
-          return {
-            ...item,
-            locations: item.locations?.filter((loc) => loc.id !== id),
-          };
-        }
-        return item;
-      });
+      const newData = data
+        .map((item) => {
+          if (type === "customer" && item.id === id) {
+            return null;
+          } else if (
+            type === "location" &&
+            parentType === "customer" &&
+            item.id === parentId
+          ) {
+            return {
+              ...item,
+              locations: item.locations?.filter((loc) => loc.id !== id),
+            };
+          } else if (
+            type === "room" &&
+            parentType === "location" &&
+            item.id === parentId
+          ) {
+            return {
+              ...item,
+              rooms: item.rooms?.filter((room) => room.id !== id),
+            };
+          }
+          return item;
+        })
+        .filter(Boolean) as Node[];
+
       setData(newData);
     } catch (err) {
       console.log(err);
-      toast.error("Failed to delete location");
+      toast.error(`Failed to delete ${type}`);
     }
     setDeleteLoading(false);
   };
 
   return (
     <div
-      className={`ml-4 ${
+      className={`${
         node?.locations ? "bg-gray-300 py-5 px-3 rounded-md cursor-pointer" : ""
       }`}
     >
@@ -71,11 +101,6 @@ const TreeNode: React.FC<{
         <h3 className={node?.locations ? "font-bold" : ""}>{node.name}</h3>
 
         <div className="flex items-center gap-3">
-          {node?.locations && (
-            <Button variant="grey" size="sm" icon={true}>
-              <MdOutlineAdd fontSize={18} />
-            </Button>
-          )}
           <Button variant="green" size="sm" icon={true}>
             <FaRegEdit fontSize={18} />
           </Button>
@@ -83,7 +108,13 @@ const TreeNode: React.FC<{
             variant="red"
             size="sm"
             onClick={() => {
-              !node?.locations && handleDeleteLocation(node.id);
+              if (parentType === "customer") {
+                handleDelete("location", node.id);
+              } else if (parentType === "location") {
+                handleDelete("room", node.id);
+              } else {
+                handleDelete("customer", node.id);
+              }
             }}
             isLoading={deleteLoading}
             icon={true}
@@ -101,6 +132,7 @@ const TreeNode: React.FC<{
               setData={setData}
               data={data}
               parentId={node?.id}
+              parentType="customer"
             />
           ))}
         </div>
@@ -116,7 +148,12 @@ const TreeNode: React.FC<{
                   <Button variant="green" size="sm" icon={true}>
                     <FaRegEdit fontSize={18} />
                   </Button>
-                  <Button variant="red" size="sm" icon={true}>
+                  <Button
+                    variant="red"
+                    size="sm"
+                    onClick={() => handleDelete("room", child.id)}
+                    icon={true}
+                  >
                     <MdOutlineDeleteOutline fontSize={18} />
                   </Button>
                 </div>

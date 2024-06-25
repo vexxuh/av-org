@@ -84,14 +84,16 @@ async fn list_customer_locations(
     let pool: &SqlitePool = db().await;
 
     let query = r#"
-          SELECT c.id, c.name, c.user_id, c.created_at, c.updated_at,
-                 l.id AS location_id, l.name AS location_name, l.user_id AS location_user_id,
-                 r.id AS room_id, r.name AS room_name, r.user_id AS room_user_id
+          SELECT 
+              c.id AS customer_id, c.name AS customer_name, c.user_id AS customer_user_id, 
+              c.created_at AS customer_created_at, c.updated_at AS customer_updated_at,
+              l.id AS location_id, l.name AS location_name, l.user_id AS location_user_id,
+              r.id AS room_id, r.name AS room_name, r.user_id AS room_user_id
           FROM customers c
           LEFT JOIN locations l ON c.id = l.customer_id
           LEFT JOIN rooms r ON l.id = r.location_id
           WHERE c.user_id = ?
-          "#;
+      "#;
 
     let rows = sqlx::query_as::<_, QueryReturnCustomerLocations>(&query)
         .bind(&user_id)
@@ -99,7 +101,8 @@ async fn list_customer_locations(
         .await
         .map_err(|e| format!("Failed to fetch customers, locations, and rooms: {}", e))?;
 
-    let mut customers_with_locations: Vec<CustomerWithLocations> = Vec::new();
+    println!("{:?}", rows);
+
     let mut customer_map: HashMap<String, CustomerWithLocations> = HashMap::new();
     let mut location_map: HashMap<String, LocationWithRooms> = HashMap::new();
 
@@ -108,7 +111,7 @@ async fn list_customer_locations(
             (row.room_id.clone(), row.room_name.clone())
         {
             Some(Room {
-                id: Some(room_id),
+                id: Some(room_id.clone()),
                 location_id: row.location_id.clone().unwrap_or_default(),
                 user_id: row.room_user_id.clone().unwrap_or_default(),
                 name: room_name,
@@ -119,59 +122,109 @@ async fn list_customer_locations(
             None
         };
 
-        let location_id = row.location_id.clone().unwrap_or_default();
-        let customer_id = row.id.clone();
+        if let Some(location_id) = row.location_id.clone() {
+            let location =
+                location_map
+                    .entry(location_id.clone())
+                    .or_insert_with(|| LocationWithRooms {
+                        id: Some(location_id.clone()),
+                        customer_id: Some(row.customer_id.clone().unwrap_or_default()),
+                        user_id: Some(row.location_user_id.clone().unwrap_or_default()),
+                        name: row.location_name.clone().unwrap_or_default(),
+                        created_at: None,
+                        updated_at: None,
+                        rooms: vec![],
+                    });
 
-        if let Some(location) = location_map.get_mut(&location_id) {
             if let Some(r) = room {
+                println!("Adding room {:?} to location {:?}", r, location.id);
                 location.rooms.push(r);
             }
-        } else {
-            let mut rooms = Vec::new();
-            if let Some(r) = room {
-                rooms.push(r);
-            }
-            let location = LocationWithRooms {
-                id: Some(location_id.clone()),
-                customer_id: Some(customer_id.clone()),
-                user_id: Some(row.user_id),
-                name: row.location_name.clone().unwrap_or_default(),
-                created_at: None,
-                updated_at: None,
-                rooms,
-            };
-            location_map.insert(location_id.clone(), location);
         }
 
-        let location_ref = location_map.get(&location_id).unwrap().clone();
+        let customer_id = row.customer_id.clone().unwrap_or_default();
 
-        if let Some(customer) = customer_map.get_mut(&customer_id) {
-            if !customer.locations.iter().any(|l| l.id == location_ref.id) {
-                customer.locations.push(location_ref);
-            }
-        } else {
-            let mut locations = vec![];
-            locations.push(location_ref);
-
-            let customer_with_locations = CustomerWithLocations {
+        customer_map
+            .entry(customer_id.clone())
+            .or_insert_with(|| CustomerWithLocations {
                 id: customer_id.clone(),
-                name: row.name.clone(),
-                created_at: row.created_at,
-                updated_at: row.updated_at,
-                locations,
+                name: row.customer_name.clone().unwrap_or_default(),
+                created_at: row.customer_created_at,
+                updated_at: row.customer_updated_at,
+                locations: vec![],
                 user_id: user_id.clone(),
-            };
-            customer_map.insert(customer_id.clone(), customer_with_locations);
+            });
+    }
+
+    for (_, location) in location_map {
+        if let Some(customer) =
+            customer_map.get_mut(&location.customer_id.clone().unwrap_or_default())
+        {
+            customer.locations.push(location);
         }
     }
 
-    for (_, customer) in customer_map {
-        customers_with_locations.push(customer);
-    }
+    let customers_with_locations: Vec<CustomerWithLocations> = customer_map.into_values().collect();
 
     Ok(Json(customers_with_locations))
 }
 
+/**
+ * Delete Customer
+ * @param id: String
+ * @param user_id: String
+ * @return Result<Json<String>, String>
+ */
+#[delete("/<id>?<user_id>")]
+async fn delete_customer(id: String, user_id: String) -> Result<Json<String>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let customer: Option<(String,)> = sqlx::query_as(
+        r#"
+        SELECT user_id
+        FROM customers
+        WHERE id = ?
+        "#,
+    )
+    .bind(&id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Failed to check if customer exists: {}", e))?;
+
+    if let Some((customer_user_id,)) = customer {
+        if customer_user_id != user_id {
+            return Err(format!("Unauthorized to delete this customer").into());
+        }
+    } else {
+        return Err(format!("Customer with id {} does not exist", id).into());
+    }
+
+    let _update_result = sqlx::query(
+        r#"
+        UPDATE gear_items
+        SET customer_id = NULL
+        WHERE customer_id = ?
+        "#,
+    )
+    .bind(&id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to update gear items: {}", e))?;
+
+    let _delete_customer_result = sqlx::query("DELETE FROM customers WHERE id = ?")
+        .bind(&id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to delete customer: {}", e))?;
+
+    Ok(Json(id))
+}
+
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_customer, list_customers, list_customer_locations]
+    routes![
+        create_customer,
+        list_customers,
+        list_customer_locations,
+        delete_customer
+    ]
 }

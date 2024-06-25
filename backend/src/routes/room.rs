@@ -120,6 +120,62 @@ async fn list_rooms(location_id: Option<String>) -> Result<Json<Vec<Room>>, Stri
     Ok(Json(rooms))
 }
 
+/**
+ * Delete Room
+ * @param id: String
+ * @param user_id: String
+ * @return Result<Json<String>, String>
+ */
+#[delete("/<id>?<user_id>")]
+async fn delete_room(id: String, user_id: String) -> Result<Json<String>, String> {
+    let pool: &SqlitePool = db().await;
+
+    let room: Option<(String,)> = sqlx::query_as(
+        r#"
+        SELECT user_id
+        FROM rooms
+        WHERE id = ?
+        "#,
+    )
+    .bind(&id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Failed to check if room exists: {}", e))?;
+
+    if let Some((room_user_id,)) = room {
+        if room_user_id != user_id {
+            return Err(format!("Unauthorized to delete this room").into());
+        }
+    } else {
+        return Err(format!("Room with id {} does not exist", id).into());
+    }
+
+    let update_result = sqlx::query(
+        r#"
+        UPDATE gear_items
+        SET room_id = NULL
+        WHERE room_id = ?
+        "#,
+    )
+    .bind(&id)
+    .execute(pool)
+    .await;
+
+    if let Err(e) = update_result {
+        return Err(format!("Failed to update gear items: {}", e).into());
+    }
+
+    let delete_room_result = sqlx::query("DELETE FROM rooms WHERE id = ?")
+        .bind(&id)
+        .execute(pool)
+        .await;
+
+    match delete_room_result {
+        Ok(_) => Ok(Json(id)),
+        Err(e) => Err(format!("Failed to delete room: {}", e).into()),
+    }
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![create_room, list_rooms]
+    routes![create_room, list_rooms, delete_room]
 }

@@ -24,19 +24,19 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
 
         CREATE TABLE IF NOT EXISTS rooms (
             id TEXT PRIMARY KEY NOT NULL,
-            location_id TEXT NOT NULL,
+            location_id TEXT,
             name TEXT NOT NULL,
             user_id TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            FOREIGN KEY (location_id) REFERENCES locations(id)
+            FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS gear_items (
             id TEXT PRIMARY KEY NOT NULL,
-            room_id TEXT NOT NULL,
+            room_id TEXT,
             customer_id TEXT NOT NULL,
-            location_id TEXT NOT NULL,
+            location_id TEXT,
             manufacturer TEXT NOT NULL,
             device_model TEXT NOT NULL,
             serial_number TEXT NOT NULL,
@@ -50,9 +50,9 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
             user_id TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            FOREIGN KEY (room_id) REFERENCES rooms(id),
-            FOREIGN KEY (customer_id) REFERENCES customers(id),
-            FOREIGN KEY (location_id) REFERENCES locations(id)
+            FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL,
+            FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+            FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS tags (
