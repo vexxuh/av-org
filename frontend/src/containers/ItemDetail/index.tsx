@@ -242,7 +242,7 @@ const ItemDetailContainer: React.FC = () => {
 
               <div className="flex flex-col gap-1 pb-5">
                 <h4 className="text-lg font-medium">Tags</h4>
-                <p>{tags.join(", ")}</p>
+                <p>{tags?.length > 0 ? tags.join(", ") : "-"}</p>
               </div>
 
               <div className="flex flex-col gap-1 pb-5">

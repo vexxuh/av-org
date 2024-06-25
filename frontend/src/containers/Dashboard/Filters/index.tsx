@@ -155,7 +155,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                   </PopoverTrigger>
                   <PopoverContent className="min-w-full md:min-w-[600px] w-full p-0 bg-slate-300">
                     <Command className="bg-slate-300">
-                      <CommandInput placeholder="Search Customers..." />
+                      <CommandInput placeholder="Search Tags..." />
                       <CommandList>
                         <CommandEmpty>No tag found.</CommandEmpty>
                         <CommandGroup>

@@ -12,6 +12,7 @@ type AddTagsProps = {
   tags: string[];
   tag: string;
   setTag: React.Dispatch<React.SetStateAction<string>>;
+  isQuickAdd?: boolean;
 };
 
 const AddTags: React.FC<AddTagsProps> = ({
@@ -20,12 +21,13 @@ const AddTags: React.FC<AddTagsProps> = ({
   tags,
   tag,
   setTag,
+  isQuickAdd,
 }) => {
   return (
     <div>
       <Input
         id="tags"
-        label="Tags"
+        label={!isQuickAdd ? "Tags" : ""}
         required
         placeholder="Press Enter or Comma(,) key to add tag"
         mb={24}
@@ -33,6 +35,7 @@ const AddTags: React.FC<AddTagsProps> = ({
         onChange={(e) => setTag((e.target as HTMLInputElement).value)}
         value={tag}
         rounded="rounded-md"
+        border={isQuickAdd ? "border-[1px] border-[#415778]" : ""}
       />
 
       <div

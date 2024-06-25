@@ -62,6 +62,7 @@ import { Paths } from "@/utils/config/paths";
 import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
 import { cn } from "@/utils/functions/cn";
 import { useUser } from "@clerk/nextjs";
+import AddTags from "@/components/common/AddTags";
 
 type QuickAddModalProps = {};
 
@@ -85,6 +86,8 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   const [locations, setLocations] = useState<LOCATION[] | []>([]);
   const [rooms, setRooms] = useState<ROOM[] | []>([]);
   const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tag, setTag] = useState<string>("");
 
   const { user } = useUser();
 
@@ -108,11 +111,14 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`,
         {
-          ...values,
-          customer_id: values.customer,
-          room_id: values.room,
-          location_id: values.location,
-          user_id: user?.id,
+          gear_item: {
+            ...values,
+            customer_id: values.customer,
+            room_id: values.room,
+            location_id: values.location,
+            user_id: user?.id,
+          },
+          tags: [],
         }
       );
 
@@ -169,6 +175,26 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
     } catch (err) {
       console.error("Error: ", err);
     }
+  };
+
+  const handleAddTags = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+
+      const inputValue = (e.target as HTMLInputElement).value.trim();
+
+      if (inputValue === "") return;
+
+      if (tags.length >= 30) return;
+      if (tags.includes(inputValue)) return;
+
+      setTags((prev) => [...prev, inputValue]);
+      setTag("");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags((prev) => prev.filter((s) => s !== tag));
   };
 
   useEffect(() => {
@@ -449,6 +475,15 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
+              <AddTags
+                handleAddTags={handleAddTags}
+                handleRemoveTag={handleRemoveTag}
+                tags={tags}
+                tag={tag}
+                setTag={setTag}
+                isQuickAdd={true}
+              />
 
               <Button
                 type="submit"
