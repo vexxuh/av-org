@@ -106,7 +106,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
-    console.log("values", values);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.GEAR_ITEM}`,
@@ -118,7 +117,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = () => {
             location_id: values.location,
             user_id: user?.id,
           },
-          tags: [],
+          tags: tags?.map((tag) => ({ name: tag, user_id: user?.id })),
         }
       );
 

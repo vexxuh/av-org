@@ -52,6 +52,66 @@ async fn create_customer(customer: Json<Customer>) -> Result<Json<Customer>, Str
 }
 
 /**
+ * Edit Customer
+ * @param id: String
+ * @param customer: Json<Customer>
+ * @return Json<Customer>
+ */
+#[put("/<id>", data = "<customer>")]
+async fn edit_customer(id: String, customer: Json<Customer>) -> Result<Json<Customer>, String> {
+    let pool: &SqlitePool = db().await;
+    let updated_customer = customer.into_inner();
+    let now = Utc::now().naive_utc();
+
+    let customer_exists: (bool,) = sqlx::query_as(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM customers WHERE id = ?
+        )
+        "#,
+    )
+    .bind(&id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to check if customer exists: {}", e))?;
+
+    if !customer_exists.0 {
+        return Err(format!("Customer with id {} does not exist", id));
+    }
+
+    let _result = sqlx::query(
+        r#"
+        UPDATE customers SET
+        name = ?, user_id = ?, updated_at = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(&updated_customer.name)
+    .bind(&updated_customer.user_id)
+    .bind(&now)
+    .bind(&id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to update customer: {}", e))?;
+
+    let sql = format!(
+        r#"
+        SELECT id, name, user_id, created_at, updated_at
+        FROM customers 
+        WHERE id = '{}'
+        "#,
+        id
+    );
+
+    let edited_customer = sqlx::query_as(&sql)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch updated customer: {}", e))?;
+
+    Ok(Json(edited_customer))
+}
+
+/**
  * List Customers
  * @return Json<Vec<Customer>>
  **/
@@ -225,6 +285,7 @@ pub fn routes() -> Vec<rocket::Route> {
         create_customer,
         list_customers,
         list_customer_locations,
-        delete_customer
+        delete_customer,
+        edit_customer
     ]
 }

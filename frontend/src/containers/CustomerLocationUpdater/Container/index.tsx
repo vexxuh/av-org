@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 
 // Clerk
@@ -28,6 +30,7 @@ import AddRoomModal from "@/containers/Modals/AddRoom";
 const CLUpdaterContainer: React.FC = () => {
   const [data, setData] = useState<Node[] | []>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -45,11 +48,12 @@ const CLUpdaterContainer: React.FC = () => {
       console.log(err);
     }
     setIsLoading(false);
+    setInitialLoad(true);
   };
 
   useEffect(() => {
-    if (user) handleFetchData();
-  }, [user]);
+    if (user || !searchParams.get("modal")) handleFetchData();
+  }, [user, searchParams]);
 
   return (
     <section className="w-full mx-auto flex items-center justify-center py-10">
@@ -87,7 +91,7 @@ const CLUpdaterContainer: React.FC = () => {
           </Link>
         </article>
 
-        {isLoading ? (
+        {isLoading && !initialLoad ? (
           <div className="w-full max-w-3xl mx-auto flex flex-col gap-10">
             {[1, 2].map((item) => (
               <div className="bg-gray-300 py-5 px-3 rounded-md" key={item}>

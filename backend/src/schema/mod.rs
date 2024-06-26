@@ -35,7 +35,7 @@ pub async fn create_tables(executor: impl Executor<'_>) -> Result<(), sqlx::Erro
         CREATE TABLE IF NOT EXISTS gear_items (
             id TEXT PRIMARY KEY NOT NULL,
             room_id TEXT,
-            customer_id TEXT NOT NULL,
+            customer_id TEXT,
             location_id TEXT,
             manufacturer TEXT NOT NULL,
             device_model TEXT NOT NULL,

@@ -65,6 +65,83 @@ async fn create_room(room: Json<Room>) -> Result<Json<Room>, String> {
 }
 
 /**
+ * Edit Room
+ * @param id: String
+ * @param room: Json<Room>
+ * @return Json<Room>
+ */
+#[put("/<id>", data = "<room>")]
+async fn edit_room(id: String, room: Json<Room>) -> Result<Json<Room>, String> {
+    let pool: &SqlitePool = db().await;
+    let updated_room = room.into_inner();
+    let now = Utc::now().naive_utc();
+
+    let location_exists: (bool,) = sqlx::query_as(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM locations WHERE id = ?
+        )
+        "#,
+    )
+    .bind(&updated_room.location_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to check if location exists: {}", e))?;
+
+    if !location_exists.0 {
+        return Err("Location does not exist".to_string());
+    }
+
+    let room_exists: (bool,) = sqlx::query_as(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM rooms WHERE id = ?
+        )
+        "#,
+    )
+    .bind(&id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to check if room exists: {}", e))?;
+
+    if !room_exists.0 {
+        return Err(format!("Room with id {} does not exist", id));
+    }
+
+    let _result = sqlx::query(
+        r#"
+        UPDATE rooms SET
+        name = ?, location_id = ?, user_id = ?, updated_at = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(&updated_room.name)
+    .bind(&updated_room.location_id)
+    .bind(&updated_room.user_id)
+    .bind(&now)
+    .bind(&id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to update room: {}", e))?;
+
+    let sql = format!(
+        r#"
+        SELECT id, location_id, user_id, name, created_at, updated_at
+        FROM rooms 
+        WHERE id = '{}'
+        "#,
+        id
+    );
+
+    let edited_room = sqlx::query_as(&sql)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch updated room: {}", e))?;
+
+    Ok(Json(edited_room))
+}
+
+/**
  * List Rooms
  * @param location_id: Option<String>
  * @return Json<Vec<Room>>
@@ -177,5 +254,5 @@ async fn delete_room(id: String, user_id: String) -> Result<Json<String>, String
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![create_room, list_rooms, delete_room]
+    routes![create_room, list_rooms, delete_room, edit_room]
 }

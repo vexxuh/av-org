@@ -59,15 +59,18 @@ import {
 import AddTags from "@/components/common/AddTags";
 
 // Schema
-import addRoomSchema from "./schema";
+import editRoomSchema from "./schema";
 
 // Utils
 import { Paths } from "@/utils/config/paths";
 import { CUSTOMER, LOCATION, ROOM } from "@/utils/types/common";
 import { cn } from "@/utils/functions/cn";
-import addLocationSchema from "./schema";
 
-type AddRoomModalProps = {};
+type EditRoomModalProps = {
+  room: ROOM & {
+    customer_id: string;
+  };
+};
 
 type FormValues = {
   name: string;
@@ -75,7 +78,7 @@ type FormValues = {
   location: string;
 };
 
-const AddRoomModal: React.FC<AddRoomModalProps> = () => {
+const EditRoomModal: React.FC<EditRoomModalProps> = ({ room }) => {
   const [customers, setCustomers] = useState<CUSTOMER[] | []>([]);
   const [locations, setLocations] = useState<LOCATION[] | []>([]);
 
@@ -84,7 +87,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
   const { push } = useRouter();
 
   const form = useForm<FormValues>({
-    resolver: yupResolver(addRoomSchema),
+    resolver: yupResolver(editRoomSchema),
   });
 
   const {
@@ -93,23 +96,27 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
     getValues,
     trigger,
     watch,
+    setValue,
   } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (values: FormValues) => {
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}`, {
-        ...values,
-        user_id: user?.id,
-        customer_id: values.customer,
-        location_id: values.location,
-      });
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.ROOM}/${room.id}`,
+        {
+          ...values,
+          user_id: user?.id,
+          customer_id: values.customer,
+          location_id: values.location,
+        }
+      );
 
-      toast.success("Room added successfully!");
+      toast.success("Room updated successfully!");
 
       push(`/customer-location-updater`);
     } catch (err) {
       console.error("Error: ", err);
-      toast.error("Error adding room!");
+      toast.error("Error updating room!");
     }
   };
 
@@ -140,6 +147,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
       );
 
       setLocations(response.data);
+      setValue("location", room?.location_id);
     } catch (err) {
       console.error("Error: ", err);
     }
@@ -155,11 +163,19 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
     }
   }, [watch("customer")]);
 
+  useEffect(() => {
+    form.reset({
+      name: room?.name,
+      location: room?.location_id,
+      customer: room?.customer_id,
+    });
+  }, [room]);
+
   return (
     <Modal onClose={handleClose}>
       <div className="bg-white p-5 rounded-lg w-[700px] text-black flex flex-col gap-10 py-10">
         <header className="flex items-center justify-center w-full">
-          <h1 className="text-2xl font-bold w-full">Add Room</h1>
+          <h1 className="text-2xl font-bold w-full">Edit Room</h1>
 
           <span
             className="flex justify-end w-1/2 cursor-pointer"
@@ -240,6 +256,9 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
                         <Select
                           onValueChange={field.onChange}
                           disabled={isSubmitting}
+                          defaultValue={
+                            room?.location_id ? room?.location_id : ""
+                          }
                         >
                           <SelectTrigger
                             className="bg-white h-12 shadow-md rounded-md border-[1px] border-[#415778]"
@@ -292,7 +311,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
                 isLoading={isSubmitting}
                 disabled={isSubmitting}
               >
-                Add Room
+                Edit Room
               </Button>
             </FormProvider>
           </form>
@@ -302,4 +321,4 @@ const AddRoomModal: React.FC<AddRoomModalProps> = () => {
   );
 };
 
-export default AddRoomModal;
+export default EditRoomModal;

@@ -65,6 +65,83 @@ async fn create_location(location: Json<Location>) -> Result<Json<Location>, Str
 }
 
 /**
+ * Edit Location
+ * @param id: String
+ * @param location: Json<Location>
+ * @return Json<Location>
+ */
+#[put("/<id>", data = "<location>")]
+async fn edit_location(id: String, location: Json<Location>) -> Result<Json<Location>, String> {
+    let pool: &SqlitePool = db().await;
+    let updated_location = location.into_inner();
+    let now = Utc::now().naive_utc();
+
+    let customer_exists: (bool,) = sqlx::query_as(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM customers WHERE id = ?
+        )
+        "#,
+    )
+    .bind(&updated_location.customer_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to check if customer exists: {}", e))?;
+
+    if !customer_exists.0 {
+        return Err("Customer does not exist".to_string());
+    }
+
+    let location_exists: (bool,) = sqlx::query_as(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM locations WHERE id = ?
+        )
+        "#,
+    )
+    .bind(&id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to check if location exists: {}", e))?;
+
+    if !location_exists.0 {
+        return Err(format!("Location with id {} does not exist", id));
+    }
+
+    let _result = sqlx::query(
+        r#"
+        UPDATE locations SET
+        name = ?, customer_id = ?, user_id = ?, updated_at = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(&updated_location.name)
+    .bind(&updated_location.customer_id)
+    .bind(&updated_location.user_id)
+    .bind(&now)
+    .bind(&id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to update location: {}", e))?;
+
+    let sql = format!(
+        r#"
+        SELECT id, customer_id, user_id, name, created_at, updated_at
+        FROM locations 
+        WHERE id = '{}'
+        "#,
+        id
+    );
+
+    let edited_location = sqlx::query_as(&sql)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| format!("Failed to fetch updated location: {}", e))?;
+
+    Ok(Json(edited_location))
+}
+
+/**
  * List Locations
  * @param customer_id: Option<String>
  * @return Json<Vec<Location>>
@@ -184,5 +261,10 @@ async fn delete_location(id: String, user_id: String) -> Result<Json<String>, St
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![create_location, list_locations, delete_location]
+    routes![
+        create_location,
+        list_locations,
+        delete_location,
+        edit_location
+    ]
 }

@@ -226,15 +226,15 @@ async fn list_gear_items(
 
     let total_items_query = format!(
         r#"
-          SELECT COUNT(DISTINCT g.id)
-          FROM gear_items g
-          JOIN rooms r ON g.room_id = r.id
-          JOIN locations l ON g.location_id = l.id
-          JOIN customers c ON g.customer_id = c.id
-          LEFT JOIN gear_item_tags git ON g.id = git.gear_item_id
-          LEFT JOIN tags t ON git.tag_id = t.id
-          {}
-          "#,
+           SELECT COUNT(DISTINCT g.id)
+           FROM gear_items g
+           LEFT JOIN rooms r ON g.room_id = r.id
+           LEFT JOIN locations l ON g.location_id = l.id
+           LEFT JOIN customers c ON g.customer_id = c.id
+           LEFT JOIN gear_item_tags git ON g.id = git.gear_item_id
+           LEFT JOIN tags t ON git.tag_id = t.id
+           {}
+           "#,
         filters_sql
     );
 
@@ -250,37 +250,37 @@ async fn list_gear_items(
 
     let sql = format!(
         r#"
-          SELECT 
-              g.id, 
-              g.room_id, 
-              g.customer_id, 
-              g.user_id, 
-              g.location_id, 
-              g.manufacturer, 
-              g.device_model, 
-              g.serial_number, 
-              g.hostname, 
-              g.firmware, 
-              g.password, 
-              g.primary_mac, 
-              g.primary_ip, 
-              g.secondary_mac, 
-              g.secondary_ip,
-              r.name AS room_name,
-              l.name AS location_name,
-              c.name AS customer_name,
-              g.created_at,
-              g.updated_at
-          FROM gear_items g
-          JOIN rooms r ON g.room_id = r.id
-          JOIN locations l ON g.location_id = l.id
-          JOIN customers c ON g.customer_id = c.id
-          LEFT JOIN gear_item_tags git ON g.id = git.gear_item_id
-          LEFT JOIN tags t ON git.tag_id = t.id
-          {}
-          GROUP BY g.id
-          LIMIT ? OFFSET ?
-          "#,
+           SELECT 
+               g.id, 
+               g.room_id, 
+               g.customer_id, 
+               g.user_id, 
+               g.location_id, 
+               g.manufacturer, 
+               g.device_model, 
+               g.serial_number, 
+               g.hostname, 
+               g.firmware, 
+               g.password, 
+               g.primary_mac, 
+               g.primary_ip, 
+               g.secondary_mac, 
+               g.secondary_ip,
+               r.name AS room_name,
+               l.name AS location_name,
+               c.name AS customer_name,
+               g.created_at,
+               g.updated_at
+           FROM gear_items g
+           LEFT JOIN rooms r ON g.room_id = r.id
+           LEFT JOIN locations l ON g.location_id = l.id
+           LEFT JOIN customers c ON g.customer_id = c.id
+           LEFT JOIN gear_item_tags git ON g.id = git.gear_item_id
+           LEFT JOIN tags t ON git.tag_id = t.id
+           {}
+           GROUP BY g.id
+           LIMIT ? OFFSET ?
+           "#,
         filters_sql
     );
 

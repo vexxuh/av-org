@@ -1,4 +1,9 @@
+"use client";
+
 import React, { useState } from "react";
+
+// Next
+import { useSearchParams, useRouter } from "next/navigation";
 
 // Clerk
 import { useUser } from "@clerk/nextjs";
@@ -18,16 +23,17 @@ import Button from "../Button";
 
 // Utils
 import { Paths } from "@/utils/config/paths";
+import EditCustomerModal from "@/containers/Modals/EditCustomer";
+import EditLocation from "@/containers/Modals/EditLocation";
+import EditRoomModal from "@/containers/Modals/EditRoom";
+import DeleteAlertModal from "@/containers/Modals/DeleteAlertModal";
 
 export type Node = {
   id: string;
   name: string;
   locations?: Node[];
   rooms?: Node[];
-};
-
-const isPathType = (type: string): type is keyof typeof Paths => {
-  return type.toUpperCase() in Paths;
+  customer_id?: string;
 };
 
 const TreeNode: React.FC<{
@@ -39,6 +45,10 @@ const TreeNode: React.FC<{
 }> = ({ node, setData, data, parentId, parentType }) => {
   const { user } = useUser();
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+
+  const searchParams = useSearchParams();
+  const { push } = useRouter();
 
   const handleDelete = async (
     type: "customer" | "location" | "room",
@@ -76,7 +86,12 @@ const TreeNode: React.FC<{
           ) {
             return {
               ...item,
-              rooms: item.rooms?.filter((room) => room.id !== id),
+              locations: item.locations?.map((loc) => {
+                return {
+                  ...loc,
+                  rooms: loc.rooms?.filter((room) => room.id !== id),
+                };
+              }),
             };
           }
           return item;
@@ -97,11 +112,73 @@ const TreeNode: React.FC<{
         node?.locations ? "bg-gray-300 py-5 px-3 rounded-md cursor-pointer" : ""
       }`}
     >
+      {parentType !== "customer" &&
+        parentType !== "location" &&
+        searchParams.get("modal") === "edit-customer" && (
+          <EditCustomerModal customer={node} />
+        )}
+
+      {parentType === "customer" &&
+        searchParams.get("modal") === "edit-location" && (
+          <EditLocation
+            location={
+              node as Node & {
+                customer_id: string;
+              }
+            }
+          />
+        )}
+
+      {parentType === "location" &&
+        searchParams.get("modal") === "edit-room" && (
+          <EditRoomModal
+            room={{
+              customer_id: parentId || "",
+              ...(node as Node & {
+                location_id: string;
+              }),
+            }}
+          />
+        )}
+
+      {deleteModal && (
+        <DeleteAlertModal
+          onClose={() => setDeleteModal(false)}
+          handleDelete={
+            parentType === "customer"
+              ? () => handleDelete("location", node.id)
+              : parentType === "location"
+              ? () => handleDelete("room", node.id)
+              : () => handleDelete("customer", node.id)
+          }
+          isDeleting={deleteLoading}
+        />
+      )}
+
       <div className={`flex items-center justify-between gap-4`}>
         <h3 className={node?.locations ? "font-bold" : ""}>{node.name}</h3>
 
         <div className="flex items-center gap-3">
-          <Button variant="green" size="sm" icon={true}>
+          <Button
+            variant="green"
+            size="sm"
+            icon={true}
+            onClick={() => {
+              if (parentType === "customer") {
+                push(
+                  `/customer-location-updater?modal=edit-location&id=${node.id}`
+                );
+              } else if (parentType === "location") {
+                push(
+                  `/customer-location-updater?modal=edit-room&id=${node.id}`
+                );
+              } else {
+                push(
+                  `/customer-location-updater?modal=edit-customer&id=${node.id}`
+                );
+              }
+            }}
+          >
             <FaRegEdit fontSize={18} />
           </Button>
           <Button
@@ -109,7 +186,7 @@ const TreeNode: React.FC<{
             size="sm"
             onClick={() => {
               if (parentType === "customer") {
-                handleDelete("location", node.id);
+                setDeleteModal(true);
               } else if (parentType === "location") {
                 handleDelete("room", node.id);
               } else {
@@ -141,24 +218,19 @@ const TreeNode: React.FC<{
       {node?.rooms && node?.rooms?.length > 0 && (
         <div className="ml-8 mt-2 flex flex-col gap-4">
           {node?.rooms?.map((child) => (
-            <div key={child.id} className="ml-4">
-              <div className="flex items-center justify-between gap-4">
-                <h3>{child.name}</h3>
-                <div className="flex items-center gap-3">
-                  <Button variant="green" size="sm" icon={true}>
-                    <FaRegEdit fontSize={18} />
-                  </Button>
-                  <Button
-                    variant="red"
-                    size="sm"
-                    onClick={() => handleDelete("room", child.id)}
-                    icon={true}
-                  >
-                    <MdOutlineDeleteOutline fontSize={18} />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <TreeNode
+              key={child.id}
+              node={child}
+              setData={setData}
+              data={data}
+              parentId={
+                data.find(
+                  (item) =>
+                    item?.locations?.find((loc) => loc.id === node.id)?.id
+                )?.id
+              }
+              parentType="location"
+            />
           ))}
         </div>
       )}

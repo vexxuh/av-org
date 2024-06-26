@@ -209,9 +209,15 @@ const Dashboard: React.FC = () => {
                 ) : data?.length > 0 ? (
                   data?.map((item: any) => (
                     <TableRow key={item?.id} className=" odd:bg-gray-100">
-                      <TableCell>{item?.customer_name}</TableCell>
-                      <TableCell>{item?.location_name}</TableCell>
-                      <TableCell>{item?.room_name}</TableCell>
+                      <TableCell className="text-center">
+                        {item?.customer_name || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item?.location_name || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item?.room_name || "-"}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
