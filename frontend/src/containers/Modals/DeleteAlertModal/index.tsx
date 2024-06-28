@@ -10,16 +10,18 @@ type DeleteAlertModalProps = {
   onClose: () => void;
   handleDelete: () => void;
   isDeleting: boolean;
+  resource?: "customer" | "location";
 };
 
 const DeleteAlertModal: React.FC<DeleteAlertModalProps> = ({
   onClose,
   handleDelete,
   isDeleting,
+  resource = "",
 }) => {
   return (
     <Modal onClose={onClose}>
-      <div className="bg-white p-5 rounded-lg w-[450px] text-black flex flex-col gap-10 py-10">
+      <div className="bg-white p-5 rounded-lg w-[450px] text-black flex flex-col gap-10 py-10 cursor-default">
         <header className="flex items-center justify-center w-full">
           <h1 className="text-2xl font-bold w-full">Delete Location</h1>
 
@@ -37,8 +39,11 @@ const DeleteAlertModal: React.FC<DeleteAlertModalProps> = ({
           </div>
 
           <p className="text-lg text-center">
-            Are you sure you want to delete this location? This will remove the
-            binding of the rooms to a location.
+            Are you sure you want to delete this {resource}?{" "}
+            {resource === "customer"
+              ? "This will also delete all the rooms associated with this location."
+              : resource === "customer" &&
+                "This will also delete all the locations associated with this customer."}
           </p>
           <div className="flex justify-end gap-5">
             <Button onClick={onClose} disabled={isDeleting} variant="grey">

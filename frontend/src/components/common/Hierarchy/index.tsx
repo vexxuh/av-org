@@ -152,6 +152,7 @@ const TreeNode: React.FC<{
               : () => handleDelete("customer", node.id)
           }
           isDeleting={deleteLoading}
+          resource={parentType}
         />
       )}
 
@@ -188,9 +189,9 @@ const TreeNode: React.FC<{
               if (parentType === "customer") {
                 setDeleteModal(true);
               } else if (parentType === "location") {
-                handleDelete("room", node.id);
+                setDeleteModal(true);
               } else {
-                handleDelete("customer", node.id);
+                setDeleteModal(true);
               }
             }}
             isLoading={deleteLoading}

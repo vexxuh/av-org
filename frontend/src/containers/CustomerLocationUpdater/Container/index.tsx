@@ -2,6 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 
+// Next
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+
 // Clerk
 import { useUser } from "@clerk/nextjs";
 
@@ -17,15 +21,13 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 // Components
 import Hierarchy, { Node } from "@/components/common/Hierarchy";
-
-// Utils
-import { Paths } from "@/utils/config/paths";
-import Link from "next/link";
-import Button from "@/components/common/Button";
-import { useSearchParams } from "next/navigation";
 import AddCustomerModal from "@/containers/Modals/AddCustomer";
 import AddLocationModal from "@/containers/Modals/AddLocation";
 import AddRoomModal from "@/containers/Modals/AddRoom";
+import Button from "@/components/common/Button";
+
+// Utils
+import { Paths } from "@/utils/config/paths";
 
 const CLUpdaterContainer: React.FC = () => {
   const [data, setData] = useState<Node[] | []>([]);
