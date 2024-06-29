@@ -28,11 +28,16 @@ import Button from "@/components/common/Button";
 
 // Utils
 import { Paths } from "@/utils/config/paths";
+import Input from "@/components/FormElements/Input/ControlledInput";
+import { FaSearch } from "react-icons/fa";
+import { CiSearch } from "react-icons/ci";
 
 const CLUpdaterContainer: React.FC = () => {
   const [data, setData] = useState<Node[] | []>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(false);
+
+  const [search, setSearch] = useState("");
 
   const searchParams = useSearchParams();
 
@@ -42,7 +47,7 @@ const CLUpdaterContainer: React.FC = () => {
     setIsLoading(true);
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.CUSTOMER}/${user?.id}/locations`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${Paths.CUSTOMER}/${user?.id}/locations?search=${search}`
       );
 
       setData(data);
@@ -91,6 +96,32 @@ const CLUpdaterContainer: React.FC = () => {
               Add Room
             </Button>
           </Link>
+        </article>
+
+        <article className="flex items-center gap-5 justify-center max-w-3xl w-full mx-auto flex-col md:flex-row">
+          <Input
+            id="search"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Search Customer, Location or Room"
+            icon={<FaSearch />}
+            mb={0}
+            value={search}
+            className="h-11 w-full pr-4 outline-none bg-slate-300 text-[#415778] placeholder:text-[#415778]"
+            rounded="rounded-md"
+            parentStyles="bg-slate-300 text-[#415778] h-full"
+          />
+
+          <Button
+            variant="grey"
+            size="sm"
+            className="rounded-md border text-popover-foreground shadow-md flex gap-2 max-w-[200px] w-full h-11"
+            iconStart={<CiSearch fontSize={16} />}
+            onClick={handleFetchData}
+          >
+            Search
+          </Button>
         </article>
 
         {isLoading && !initialLoad ? (

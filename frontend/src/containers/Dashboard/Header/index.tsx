@@ -39,16 +39,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   const [search, setSearch] = useState("");
   return (
-    <div className="p-3 w-full justify-between md:flex bg-white mb-4 rounded-lg">
-      <div className="flex items-center w-full">
-        <div className=" md:w-auto">
+    <div className="p-3 w-full justify-between md:flex bg-white mb-4 rounded-lg h-full">
+      <div className="flex items-center w-full mb-3 md:mb-0">
+        <div className="max-w-[800px] w-full md:w-auto">
           <Select
             value={limit.toString()}
             onValueChange={(value) => handleUpdateLimit(parseInt(value))}
             defaultValue="25"
           >
             <SelectTrigger
-              className="bg-[#415778] w-32 h-12 shadow-md rounded-md text-white"
+              className="bg-[#415778] w-full md:w-32 h-11 shadow-md rounded-md text-white"
               id="location"
             >
               <SelectValue placeholder="Select a location" />
@@ -67,8 +67,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </Select>
         </div>
       </div>
-      <div className="flex w-full md:w-auto h-[42px] gap-3">
-        <div className="max-w-96 w-full">
+      <div className="flex w-full md:w-auto nd:h-[42px] gap-3 flex-col md:flex-row">
+        <div className="max-w-[800px] md:max-w-96 w-full">
           <Input
             id="search"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -78,7 +78,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             icon={<FaSearch />}
             mb={0}
             value={search}
-            className="h-[40px] outline-none bg-slate-300 text-[#415778] placeholder:text-[#415778]"
+            className="h-11 outline-none bg-slate-300 text-[#415778] placeholder:text-[#415778]"
             rounded="rounded-md"
             parentStyles="bg-slate-300 text-[#415778] h-full"
           />
@@ -87,7 +87,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <Button
           variant="grey"
           size="sm"
-          className="rounded-md border text-popover-foreground shadow-md  flex gap-2 "
+          className="rounded-md border text-popover-foreground shadow-md flex gap-2 max-w-[800px] w-full h-11"
           iconStart={<CiSearch fontSize={16} />}
           onClick={() => handleFetchItems(search)}
         >
@@ -95,10 +95,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </Button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild className="max-w-[800px] w-full">
             <span>
               <Button
-                className="rounded-md border text-popover-foreground shadow-md  flex gap-2"
+                className="rounded-md border text-popover-foreground shadow-md  flex gap-2 h-11"
                 iconStart={<CiExport fontSize={16} />}
                 variant="grey"
                 size="sm"

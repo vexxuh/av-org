@@ -105,7 +105,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 py-2 transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-          <div className="mb-2 ml-4 mr-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 h-[48px]">
+          <div className="mb-2 mx-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 h-full gap-3">
             <Input
               id="manufacturer"
               placeholder="Manufacturer"
@@ -117,6 +117,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 handleFilterChange("manufacturer", e.target.value)
               }
               disabled={isLoading}
+              mb={0}
             />
             <Input
               id="device_model"
@@ -129,6 +130,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                 handleFilterChange("device_model", e.target.value)
               }
               disabled={isLoading}
+              mb={0}
             />
             {/* <Input
               id="firmware"

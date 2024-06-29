@@ -137,26 +137,33 @@ async fn list_customers() -> Result<Json<Vec<Customer>>, String> {
  * @param user_id: String
  * @return Json<Vec<CustomerWithLocations>>
  **/
-#[get("/<user_id>/locations")]
+#[get("/<user_id>/locations?<search>")]
 async fn list_customer_locations(
     user_id: String,
+    search: Option<String>,
 ) -> Result<Json<Vec<CustomerWithLocations>>, String> {
     let pool: &SqlitePool = db().await;
 
+    let search_pattern = format!("%{}%", search.clone().unwrap_or_default());
+
     let query = r#"
-          SELECT 
-              c.id AS customer_id, c.name AS customer_name, c.user_id AS customer_user_id, 
-              c.created_at AS customer_created_at, c.updated_at AS customer_updated_at,
-              l.id AS location_id, l.name AS location_name, l.user_id AS location_user_id,
-              r.id AS room_id, r.name AS room_name, r.user_id AS room_user_id
-          FROM customers c
-          LEFT JOIN locations l ON c.id = l.customer_id
-          LEFT JOIN rooms r ON l.id = r.location_id
-          WHERE c.user_id = ?
-      "#;
+        SELECT 
+            c.id AS customer_id, c.name AS customer_name, c.user_id AS customer_user_id, 
+            c.created_at AS customer_created_at, c.updated_at AS customer_updated_at,
+            l.id AS location_id, l.name AS location_name, l.user_id AS location_user_id,
+            r.id AS room_id, r.name AS room_name, r.user_id AS room_user_id
+        FROM customers c
+        LEFT JOIN locations l ON c.id = l.customer_id
+        LEFT JOIN rooms r ON l.id = r.location_id
+        WHERE c.user_id = ?
+          AND (c.name LIKE ? OR l.name LIKE ? OR r.name LIKE ?)
+    "#;
 
     let rows = sqlx::query_as::<_, QueryReturnCustomerLocations>(&query)
         .bind(&user_id)
+        .bind(&search_pattern)
+        .bind(&search_pattern)
+        .bind(&search_pattern)
         .fetch_all(pool)
         .await
         .map_err(|e| format!("Failed to fetch customers, locations, and rooms: {}", e))?;
